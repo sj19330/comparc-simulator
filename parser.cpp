@@ -8,9 +8,9 @@
 using namespace std;
 
 //////////////////////////////     Read in Text file
-vector<string> readtxtFile(){
+vector<string> readtxtFile(string input){
     vector<string> lines;
-    ifstream file_("machineCode.txt");
+    ifstream file_(input);
     if(file_.is_open()){
         string line;
         while(getline(file_, line)){

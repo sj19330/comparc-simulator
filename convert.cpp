@@ -31,9 +31,11 @@ op decodeOp(string op){
 
 int decodeReg(string r){
     string x;
-    for(int i = 1; i<r.size(); i++){
-        x.push_back(r[i]);
-    }
+    if(r[0] == 'r'){
+        for(int i = 1; i<r.size(); i++){
+            x.push_back(r[i]);
+        }
+    }else{x = r;}
     return stoi(x);
 }
 
