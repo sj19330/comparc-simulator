@@ -5,9 +5,14 @@
 #include <string>
 #include "headers/convert.h"
 #include "headers/parser.h"
+#include <unordered_map>
+
 
 using namespace std;
+
 float registers[32];
+unordered_map<string, int> branches;
+
 struct opline {
     op operation;
     int s1;
