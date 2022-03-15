@@ -1,0 +1,14 @@
+Ldi r0, 5
+Ldi r1, 1
+Ld r2, r0
+Subi r3, r0, 1
+Brlt 9 r1, r3
+Mul r2, r2, r3
+Subi r3, r3, 1
+Br 5 0
+Ld r31, r2
+
+
+//to run only copy up to line 9 into "machineCode.txt"
+this is a progtam which calculates the factorial of the number loaded into r0 (the top line, this can be any number)
+when finished the program moves the answer into the last (32nd register)

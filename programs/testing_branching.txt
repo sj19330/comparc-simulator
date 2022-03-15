@@ -1,0 +1,7 @@
+Ldi r0, 5
+Ldi r1, 6
+Brne 5 r0, r1
+Ldi r2, 5
+Ldi r3, 5
+Ldi r4, 5
+Ldi r5, 20

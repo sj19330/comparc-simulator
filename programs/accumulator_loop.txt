@@ -1,0 +1,12 @@
+Ldi r0, 1
+Ldi r1, 10
+Brlt 6 r0, r1
+Addi r0, r0, 1
+Br 3 0
+Ld r31, r0
+
+
+
+//to run only copy up to line 5 into "machineCode.txt"
+this is a simple loop that goes round as many times as the value loaded into r1
+it then stores the ammount of times it looped int r31
