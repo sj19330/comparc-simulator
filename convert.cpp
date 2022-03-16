@@ -26,6 +26,7 @@ op decodeOp(string op){
     else if(op == "Bre")return BRE;    
     else if(op == "Br")return BR;
     else if(op == "Cmp")return CMP;
+    else if(op == "label:") return LABEL;
     else return BLANK;
 }
 

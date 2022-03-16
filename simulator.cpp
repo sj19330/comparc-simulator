@@ -95,6 +95,9 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
             else if (registers[decodeReg(line.vars[1])] == registers[decodeReg(line.vars[2])]) registers[decodeReg(line.vars[0])] = 0;
             else if (registers[decodeReg(line.vars[1])] > registers[decodeReg(line.vars[2])]) registers[decodeReg(line.vars[0])] = 1;
             break;
+        case LABEL:
+            branches[line.vars[0]] = *PC;
+            break;
         case BLANK:
             break;
         default:
@@ -122,5 +125,5 @@ int main(){
         }
         cout << endl << PC << endl << endl;
     }
-    cout << "clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << (float(instructionsExecuted)/float(CLOCK)) << endl <<endl;
+    cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << (float(instructionsExecuted)/float(CLOCK)) << endl <<endl;
 }
