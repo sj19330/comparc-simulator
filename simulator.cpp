@@ -10,6 +10,12 @@
 
 using namespace std;
 
+struct opline {
+    op operation;
+    vector<int> vars;
+    string label;
+} typedef opline;
+
 float registers[32];
 unordered_map<string, int> branches;
 
@@ -36,6 +42,8 @@ opline decode(string line, int *CLOCK){
             int elem = decodeReg(elements[i]);
             decodedElem.push_back(elem);
         }
+    }else{
+        opline.label = elements[0];
     }
     opline.vars = decodedElem;
     *CLOCK = *CLOCK + 1;
@@ -100,6 +108,7 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
             break;
         case LABEL:
             // branches[line.vars[0]] = *PC;
+            cout << line.label << endl;
             break;
         case BLANK:
             break;
@@ -117,10 +126,14 @@ int main(){
     int CLOCK = 0;
     int instructionsExecuted = 0;
     int PC = 1;
+    // loads the program as a vector of strings (one for each line) into "instructions"
     vector<string> instructions = readtxtFile("machineCode.txt");
     while(PC<(instructions.size()+1)){
+        //gets the line from instructions corresponding to where the program counter is currently pointing
         string instructionString = fetch(instructions, &PC, &CLOCK);
+        //splits the line into an opcode and variables for the computer to execute
         opline instruction = decode(instructionString, &CLOCK);
+        //takes the opcode and vars and executes accordingly
         execute(instruction, registers, &CLOCK, &PC);   
         instructionsExecuted++;
         for(int i = 0; i<32; i++){

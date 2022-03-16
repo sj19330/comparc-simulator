@@ -12,6 +12,7 @@ Mod r7, r1, r2
 Brne 15 r6, r20
 Brne 15 r7, r20
 Ld r8, r2
+Label: B1
 Addi r2, r2, 1
 Br 6 0
 Ld r31, r8 
