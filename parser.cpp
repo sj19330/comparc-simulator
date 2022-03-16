@@ -28,13 +28,15 @@ vector<string> split (string line){
     vector<string> words;
     string word;
     for(int i = 0; i<line.size(); i++){
-        if(line[i] == ' '){
+        if(line[i] == ' ' && (word.size() > 0)){
             words.push_back(word);
             word.clear();
-        }else{
+        }else if(line[i] != ' '){
             word.push_back(line[i]);
         }
     }
-    words.push_back(word);
+    if(word.size()>0){
+        words.push_back(word);
+    }
     return words;
 }

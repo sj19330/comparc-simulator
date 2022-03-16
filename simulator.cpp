@@ -15,7 +15,8 @@ unordered_map<string, int> branches;
 
 struct opline {
     op operation;
-    vector<string> vars;
+    vector<int> vars;
+    string label;
 } typedef opline;
 
 //////////////////////////////      Stages
@@ -31,10 +32,18 @@ string fetch(vector<string> instructions, int *PC, int *CLOCK){
 ///// decode simulator
 opline decode(string line, int *CLOCK){
     opline opline;
+    vector<int> decodedElem;
     vector<string> elements = split(line);
+
     opline.operation = decodeOp(elements[0]);
     elements.erase(elements.begin());
-    opline.vars = elements;
+    if(opline.operation != LABEL){
+        for(int i = 0; i < elements.size(); i++){
+            int elem = decodeReg(elements[i]);
+            decodedElem.push_back(elem);
+        }
+    }
+    opline.vars = decodedElem;
     *CLOCK = *CLOCK + 1;
     cout << line  << endl;
     return opline;
@@ -45,58 +54,58 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
     float val;
     switch(line.operation){
         case ADD:
-            registers[decodeReg(line.vars[0])] =  registers[decodeReg(line.vars[1])] + registers[decodeReg(line.vars[0])];
+            registers[line.vars[0]] =  registers[line.vars[1]] + registers[line.vars[0]];
             break;
         case ADDI:
-            registers[decodeReg(line.vars[0])] =  registers[decodeReg(line.vars[1])] + decodeReg(line.vars[2]);
+            registers[line.vars[0]] =  registers[line.vars[1]] + line.vars[2];
             break;
         case SUB:
-            registers[decodeReg(line.vars[0])] =  registers[decodeReg(line.vars[1])] - registers[decodeReg(line.vars[2])];
+            registers[line.vars[0]] =  registers[line.vars[1]] - registers[line.vars[2]];
             break;
         case SUBI:
-            registers[decodeReg(line.vars[0])] =  registers[decodeReg(line.vars[1])] - decodeReg(line.vars[2]);
+            registers[line.vars[0]] =  registers[line.vars[1]] - line.vars[2];
             break;
         case MUL: 
-            registers[decodeReg(line.vars[0])] =  registers[decodeReg(line.vars[1])] * registers[decodeReg(line.vars[2])];
+            registers[line.vars[0]] =  registers[line.vars[1]] * registers[line.vars[2]];
             break;
         case MULI: 
-            registers[decodeReg(line.vars[0])] =  registers[decodeReg(line.vars[1])] * decodeReg(line.vars[2]);
+            registers[line.vars[0]] =  registers[line.vars[1]] * line.vars[2];
             break;
         case DIV:
-            registers[decodeReg(line.vars[0])] =  registers[decodeReg(line.vars[1])] / registers[decodeReg(line.vars[2])];
+            registers[line.vars[0]] =  registers[line.vars[1]] / registers[line.vars[2]];
             break;
         case DIVI:
-            registers[decodeReg(line.vars[0])] =  registers[decodeReg(line.vars[1])] / decodeReg(line.vars[2]);
+            registers[line.vars[0]] =  registers[line.vars[1]] / line.vars[2];
             break;
         case MOD:
-            registers[decodeReg(line.vars[0])] = int(registers[decodeReg(line.vars[1])]) % int(registers[decodeReg(line.vars[2])]);
+            registers[line.vars[0]] = int(registers[line.vars[1]]) % int(registers[line.vars[2]]);
             break;
         case LD:
-            registers[decodeReg(line.vars[0])] = registers[decodeReg(line.vars[1])];
+            registers[line.vars[0]] = registers[line.vars[1]];
             break;
         case LDI:
             cout << line.vars[0] << endl;
-            registers[decodeReg(line.vars[0])] = decodeReg(line.vars[1]);
+            registers[line.vars[0]] = line.vars[1];
             break;
         case BRNE:
-            if(registers[decodeReg(line.vars[1])] != registers[decodeReg(line.vars[2])]) *PC = decodeReg(line.vars[0])-1;
+            if(registers[line.vars[1]] != registers[line.vars[2]]) *PC = line.vars[0]-1;
             break;
         case BRE:
-            if(registers[decodeReg(line.vars[1])] == registers[decodeReg(line.vars[2])]) *PC = decodeReg(line.vars[0])-1;
+            if(registers[line.vars[1]] == registers[line.vars[2]]) *PC = line.vars[0]-1;
             break;
         case BRLT:
-            if(!(registers[decodeReg(line.vars[1])] < registers[decodeReg(line.vars[2])])) *PC = decodeReg(line.vars[0])-1;
+            if(!(registers[line.vars[1]] < registers[line.vars[2]])) *PC = line.vars[0]-1;
             break;
         case BR: 
-            *PC = decodeReg(line.vars[0])-1;
+            *PC = line.vars[0]-1;
             break;
         case CMP: 
-            if(registers[decodeReg(line.vars[1])]< registers[decodeReg(line.vars[2])]) registers[decodeReg(line.vars[0])] = -1;
-            else if (registers[decodeReg(line.vars[1])] == registers[decodeReg(line.vars[2])]) registers[decodeReg(line.vars[0])] = 0;
-            else if (registers[decodeReg(line.vars[1])] > registers[decodeReg(line.vars[2])]) registers[decodeReg(line.vars[0])] = 1;
+            if(registers[line.vars[1]]< registers[line.vars[2]]) registers[line.vars[0]] = -1;
+            else if (registers[line.vars[1]] == registers[line.vars[2]]) registers[line.vars[0]] = 0;
+            else if (registers[line.vars[1]] > registers[line.vars[2]]) registers[line.vars[0]] = 1;
             break;
         case LABEL:
-            branches[line.vars[0]] = *PC;
+            // branches[line.vars[0]] = *PC;
             break;
         case BLANK:
             break;
@@ -126,4 +135,4 @@ int main(){
         cout << endl << PC << endl << endl;
     }
     cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << (float(instructionsExecuted)/float(CLOCK)) << endl <<endl;
-}
+} 
