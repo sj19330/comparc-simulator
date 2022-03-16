@@ -13,12 +13,6 @@ using namespace std;
 float registers[32];
 unordered_map<string, int> branches;
 
-struct opline {
-    op operation;
-    vector<int> vars;
-    string label;
-} typedef opline;
-
 //////////////////////////////      Stages
 
 ///// fetch simulator
