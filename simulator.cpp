@@ -36,6 +36,10 @@ opline decode(string line, int *CLOCK){
     vector<string> elements = split(line);
 
     opline.operation = decodeOp(elements[0]);
+    if(opline.operation == BR){
+        opline.label = elements[1];
+        elements.erase(elements.begin());
+    }
     elements.erase(elements.begin());
     if(opline.operation != LABEL){
         for(int i = 0; i < elements.size(); i++){
@@ -99,7 +103,8 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
             if(!(registers[line.vars[1]] < registers[line.vars[2]])) *PC = line.vars[0]-1;
             break;
         case BR: 
-            *PC = line.vars[0]-1;
+            cout << branches[line.label] << endl;
+            *PC = branches[line.label]-1;
             break;
         case CMP: 
             if(registers[line.vars[1]]< registers[line.vars[2]]) registers[line.vars[0]] = -1;
@@ -107,8 +112,9 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
             else if (registers[line.vars[1]] > registers[line.vars[2]]) registers[line.vars[0]] = 1;
             break;
         case LABEL:
-            // branches[line.vars[0]] = *PC;
-            cout << line.label << endl;
+            branches[line.label] = *PC+1;
+            cout << branches[line.label] << endl;
+
             break;
         case BLANK:
             break;
@@ -116,6 +122,7 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
             ;
     }
     *PC = *PC +1;
+    cout << *PC << endl;
     *CLOCK = *CLOCK + 1;
 }
 
@@ -142,4 +149,5 @@ int main(){
         cout << endl << PC << endl << endl;
     }
     cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << (float(instructionsExecuted)/float(CLOCK)) << endl <<endl;
+    cout << branches["B1"] << endl;
 } 

@@ -2,17 +2,17 @@ Ldi r0, 18
 Ldi r1, 12
 Ldi r2, 1    
 Ldi r3, 1
-Ldi r20, 0  
+Ldi r20, 0 
+Label: B1 
 Cmp r4, r2, r0
 Cmp r5, r2, r1
-Bre 17 r4, r3
-Bre 17 r5, r3
+Bre 18 r4, r3
+Bre 18 r5, r3
 Mod r6, r0, r2
 Mod r7, r1, r2
-Brne 15 r6, r20
-Brne 15 r7, r20
+Brne 16 r6, r20
+Brne 16 r7, r20
 Ld r8, r2
-Label: B1
 Addi r2, r2, 1
-Br 6 0
+Br B1
 Ld r31, r8 
