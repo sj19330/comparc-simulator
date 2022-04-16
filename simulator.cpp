@@ -16,13 +16,25 @@ struct opline {
     string label;
 } typedef opline;
 
+int FINISHED = 0;
 float registers[32];
+string instructionMemory[64];
+float memory[516];
 unordered_map<string, int> branches;
+//////////////////////////////      Loading in program
+
+
+void loadIntoMemory(string program){
+    vector<string> instructions = readtxtFile(program);
+    for(int i = 0; i<instructions.size(); i++){
+        instructionMemory[i] = instructions[i];
+    }
+}
 
 //////////////////////////////      Stages
 
 ///// fetch simulator
-string fetch(vector<string> instructions, int *PC, int *CLOCK){
+string fetch(string instructions[], int *PC, int *CLOCK){
     string instruction = instructions[(*PC-1)];
     split(instruction);
     *CLOCK = *CLOCK + 1;
@@ -60,7 +72,7 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
     float val;
     switch(line.operation){
         case ADD:
-            registers[line.vars[0]] =  registers[line.vars[1]] + registers[line.vars[0]];
+            registers[line.vars[0]] =  registers[line.vars[1]] + registers[line.vars[2]];
             break;
         case ADDI:
             registers[line.vars[0]] =  registers[line.vars[1]] + line.vars[2];
@@ -116,6 +128,8 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
             cout << branches[line.label] << endl;
 
             break;
+        case HALT:
+            FINISHED = 1;
         case BLANK:
             break;
         default:
@@ -129,15 +143,16 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
 
 /////////////////////////////      Main loop
 int main(){
-
     int CLOCK = 0;
     int instructionsExecuted = 0;
     int PC = 1;
     // loads the program as a vector of strings (one for each line) into "instructions"
-    vector<string> instructions = readtxtFile("machineCode.txt");
-    while(PC<(instructions.size()+1)){
+    // vector<string> instructions = readtxtFile("machineCode.txt");
+    string program = "machineCode.txt";
+    loadIntoMemory(program);
+    while(FINISHED != 1){
         //gets the line from instructions corresponding to where the program counter is currently pointing
-        string instructionString = fetch(instructions, &PC, &CLOCK);
+        string instructionString = fetch(instructionMemory, &PC, &CLOCK);
         //splits the line into an opcode and variables for the computer to execute
         opline instruction = decode(instructionString, &CLOCK);
         //takes the opcode and vars and executes accordingly
@@ -151,3 +166,11 @@ int main(){
     cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << (float(instructionsExecuted)/float(CLOCK)) << endl <<endl;
     cout << branches["B1"] << endl;
 } 
+
+// int main(){
+//     string program = "machineCode.txt";
+//     loadIntoMemory(program);
+//     for(int i=0; i < 64; i++){
+//         cout << i << ": " << instructionMemory[i] << endl;
+//     }
+// }

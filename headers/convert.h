@@ -7,7 +7,7 @@
 using namespace std;
 //// op defines the ISA
 enum op {
-    ADD, ADDI, SUB, SUBI, MUL, MULI, DIV, DIVI, MOD, LD, LDI, STR, BRLT, BRNE, BRE, BR, CMP, BLANK, LABEL,
+    ADD, ADDI, SUB, SUBI, MUL, MULI, DIV, DIVI, MOD, LD, LDI, STR, BRLT, BRNE, BRE, BR, CMP, BLANK, LABEL, HALT
 };
 
 // decodeOp converts a string into an enum of type op so it can later be used in a switch statement

@@ -1,8 +1,8 @@
-Ldi r0, 18   
+Ldi r0, 18
 Ldi r1, 12
-Ldi r2, 1    
+Ldi r2, 1
 Ldi r3, 1
-Ldi r20, 0 
+Ldi r20, 0
 Label: B1 
 Cmp r4, r2, r0
 Cmp r5, r2, r1
@@ -15,4 +15,5 @@ Brne 16 r7, r20
 Ld r8, r2
 Addi r2, r2, 1
 Br B1
-Ld r31, r8 
+Ld r31, r8
+Halt
