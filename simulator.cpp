@@ -60,7 +60,7 @@ opline decode(string line, int *CLOCK){
     vector<string> elements = split(line);
 
     opline.operation = decodeOp(elements[0]);
-    if(opline.operation == BR){
+    if(opline.operation == BR || opline.operation == BRE || opline.operation == BRNE){
         opline.label = elements[1];
         elements.erase(elements.begin());
     }
@@ -118,13 +118,13 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
             registers[line.vars[0]] = line.vars[1];
             break;
         case BRNE:
-            if(registers[line.vars[1]] != registers[line.vars[2]]) *PC = line.vars[0]-1;
+            if(registers[line.vars[0]] != registers[line.vars[1]]) *PC = LABELS[line.label]-1;
             break;
         case BRE:
-            if(registers[line.vars[1]] == registers[line.vars[2]]) *PC = line.vars[0]-1;
+            if(registers[line.vars[0]] == registers[line.vars[1]]) *PC = LABELS[line.label]-1;
             break;
         case BRLT:
-            if(!(registers[line.vars[1]] < registers[line.vars[2]])) *PC = line.vars[0]-1;
+            if(!(registers[line.vars[0]] < registers[line.vars[1]])) *PC = LABELS[line.label]-1;
             break;
         case BR: 
             cout << LABELS[line.label] << endl;
@@ -175,17 +175,24 @@ int main(){
         //takes the opcode and vars and executes accordingly
         execute(instruction, registers, &CLOCK, &PC);   
         instructionsExecuted++;
+        cout << "registers: ";
         for(int i = 0; i<32; i++){
             cout << registers[i] << " ";
         } 
-        cout << endl << PC << endl << endl;
+        cout << endl << "PC: " << PC << endl << endl;
     }
     cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << (float(instructionsExecuted)/float(CLOCK)) << endl <<endl;
-    cout << LABELS["B1"] <<endl;
 } 
 
-// int main(){
+// int main1(){
+
+
+//     int CLOCK = 0;
+//     int instructionsExecuted = 0;
+//     int PC = 1;
 //     string program = "machineCode.txt";
 //     loadIntoMemory(program);
 //     findLabels(instructionMemory);
+//     opline instruction = decode("Bre B2 r5, r3", &CLOCK);
+//     cout << "ins: " << instruction.operation << " label: " << instruction.label << " var1: " << instruction.vars[0] << " var2: " << instruction.vars[1] << " var3:" << instruction.vars[2] << " " << endl;
 // }

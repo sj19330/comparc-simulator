@@ -6,14 +6,16 @@ Ldi r20, 0
 Label: B1 
 Cmp r4, r2, r0
 Cmp r5, r2, r1
-Bre 18 r4, r3
-Bre 18 r5, r3
+Bre B2 r4, r3
+Bre B2 r5, r3
 Mod r6, r0, r2
 Mod r7, r1, r2
-Brne 16 r6, r20
-Brne 16 r7, r20
+Brne B3 r6, r20
+Brne B3 r7, r20
 Ld r8, r2
+Label: B3
 Addi r2, r2, 1
 Br B1
+Label: B2
 Ld r31, r8
 Halt
