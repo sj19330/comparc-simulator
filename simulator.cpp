@@ -16,21 +16,33 @@ struct opline {
     string label;
 } typedef opline;
 
+int LENOFPROGRAM;
 int FINISHED = 0;
 float registers[32];
 string instructionMemory[64];
 float memory[516];
-unordered_map<string, int> branches;
-//////////////////////////////      Loading in program
+unordered_map<string, int> LABELS;
+//////////////////////////////      Loading in program and initialising
 
 
 void loadIntoMemory(string program){
     vector<string> instructions = readtxtFile(program);
+    LENOFPROGRAM = instructions.size();
     for(int i = 0; i<instructions.size(); i++){
         instructionMemory[i] = instructions[i];
     }
 }
 
+
+void findLabels(string insts[64]){
+    cout << "here" << endl;
+    for(int i=0; i<LENOFPROGRAM; i++){
+        vector<string> line = split(insts[i]);
+        if(line[0] == "Label:"){
+            LABELS[line[1]] = i+2;
+        }
+    }
+}
 //////////////////////////////      Stages
 
 ///// fetch simulator
@@ -115,8 +127,8 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
             if(!(registers[line.vars[1]] < registers[line.vars[2]])) *PC = line.vars[0]-1;
             break;
         case BR: 
-            cout << branches[line.label] << endl;
-            *PC = branches[line.label]-1;
+            cout << LABELS[line.label] << endl;
+            *PC = LABELS[line.label]-1;
             break;
         case CMP: 
             if(registers[line.vars[1]]< registers[line.vars[2]]) registers[line.vars[0]] = -1;
@@ -124,9 +136,6 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
             else if (registers[line.vars[1]] > registers[line.vars[2]]) registers[line.vars[0]] = 1;
             break;
         case LABEL:
-            branches[line.label] = *PC+1;
-            cout << branches[line.label] << endl;
-
             break;
         case HALT:
             FINISHED = 1;
@@ -143,13 +152,21 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
 
 /////////////////////////////      Main loop
 int main(){
+
+
     int CLOCK = 0;
     int instructionsExecuted = 0;
     int PC = 1;
-    // loads the program as a vector of strings (one for each line) into "instructions"
-    // vector<string> instructions = readtxtFile("machineCode.txt");
     string program = "machineCode.txt";
+    
+    
+    // loads the program into the instructionMemory and finds all the labels for branches, putting them in table: "LABELS"
     loadIntoMemory(program);
+    
+    // finds where the Labels are so they can easily be accesed for branches
+    findLabels(instructionMemory);
+
+
     while(FINISHED != 1){
         //gets the line from instructions corresponding to where the program counter is currently pointing
         string instructionString = fetch(instructionMemory, &PC, &CLOCK);
@@ -160,17 +177,15 @@ int main(){
         instructionsExecuted++;
         for(int i = 0; i<32; i++){
             cout << registers[i] << " ";
-        }
+        } 
         cout << endl << PC << endl << endl;
     }
     cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << (float(instructionsExecuted)/float(CLOCK)) << endl <<endl;
-    cout << branches["B1"] << endl;
+    cout << LABELS["B1"] <<endl;
 } 
 
 // int main(){
 //     string program = "machineCode.txt";
 //     loadIntoMemory(program);
-//     for(int i=0; i < 64; i++){
-//         cout << i << ": " << instructionMemory[i] << endl;
-//     }
+//     findLabels(instructionMemory);
 // }
