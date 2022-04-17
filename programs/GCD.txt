@@ -15,3 +15,27 @@ Ld r8, r2        ///only executed if both v1 and v2 mod i == 0, in this case loa
 Addi r2, r2, 1   ///add one to i 
 Br 6 0           ///branch back to the start of the loop (line 6)
 Ld r31, r8       ///store the CD in r8 in r31 this is the GCDs
+
+
+
+Ldi r0, 18
+Ldi r1, 12
+Ldi r2, 1
+Ldi r3, 1
+Ldi r20, 0
+Label: B1 
+Cmp r4, r2, r0
+Cmp r5, r2, r1
+Bre B2 r4, r3
+Bre B2 r5, r3
+Mod r6, r0, r2
+Mod r7, r1, r2
+Brne B3 r6, r20
+Brne B3 r7, r20
+Mv r8, r2
+Label: B3
+Addi r2, r2, 1
+Br B1
+Label: B2
+Mv r31, r8
+Halt

@@ -1,5 +1,11 @@
-exec: simulator.o convert.o parser.o
-	g++ simulator.o convert.o parser.o -o exec
+exec: simulator.o convert.o parser.o nonPL.o pipelined.o
+	g++ simulator.o convert.o parser.o nonPL.o pipelined.o -o exec
+
+pipelined.o: pipelined.cpp
+	g++ -c pipelined.cpp
+
+nonPL.o: nonPL.cpp
+	g++ -c nonPL.cpp
 
 simulator.o: simulator.cpp
 	g++ -c simulator.cpp
