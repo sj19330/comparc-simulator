@@ -28,14 +28,21 @@ unordered_map<string, int> LABELS;
 void loadIntoMemory(string program){
     vector<string> instructions = readtxtFile(program);
     LENOFPROGRAM = instructions.size();
+    int j = 0;
     for(int i = 0; i<instructions.size(); i++){
-        instructionMemory[i] = instructions[i];
+        vector<string> line = split(instructions[i]);
+        if(line[0] == "Label:"){
+            LABELS[line[1]] = j+1;
+        }
+        else{
+            instructionMemory[j] = instructions[i];
+            j++;
+        }   
     }
 }
 
 
 void findLabels(string insts[64]){
-    cout << "here" << endl;
     for(int i=0; i<LENOFPROGRAM; i++){
         vector<string> line = split(insts[i]);
         if(line[0] == "Label:"){
@@ -65,13 +72,9 @@ opline decode(string line, int *CLOCK){
         elements.erase(elements.begin());
     }
     elements.erase(elements.begin());
-    if(opline.operation != LABEL){
-        for(int i = 0; i < elements.size(); i++){
-            int elem = decodeReg(elements[i]);
-            decodedElem.push_back(elem);
-        }
-    }else{
-        opline.label = elements[0];
+    for(int i = 0; i < elements.size(); i++){
+        int elem = decodeReg(elements[i]);
+        decodedElem.push_back(elem);
     }
     opline.vars = decodedElem;
     *CLOCK = *CLOCK + 1;
@@ -111,11 +114,20 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
             registers[line.vars[0]] = int(registers[line.vars[1]]) % int(registers[line.vars[2]]);
             break;
         case LD:
-            registers[line.vars[0]] = registers[line.vars[1]];
-            break;
+            registers[line.vars[0]] = memory[ int(registers[line.vars[1]]) + int(registers[line.vars[2]])];
         case LDI:
             cout << line.vars[0] << endl;
             registers[line.vars[0]] = line.vars[1];
+            break;
+        case MV:
+            registers[line.vars[0]] = registers[line.vars[1]];
+            break;
+        case STR:
+        // add somthing to make sure the values are ints before 
+            memory[int(registers[line.vars[1]]) + int(registers[line.vars[2]])] = registers[line.vars[0]];
+            break;
+        case STRI:
+            memory[int(registers[line.vars[1]]) + int(registers[line.vars[2]])] = line.vars[0];
             break;
         case BRNE:
             if(registers[line.vars[0]] != registers[line.vars[1]]) *PC = LABELS[line.label]-1;
@@ -134,8 +146,6 @@ void execute(opline line, float registers[32], int *CLOCK, int *PC){
             if(registers[line.vars[1]]< registers[line.vars[2]]) registers[line.vars[0]] = -1;
             else if (registers[line.vars[1]] == registers[line.vars[2]]) registers[line.vars[0]] = 0;
             else if (registers[line.vars[1]] > registers[line.vars[2]]) registers[line.vars[0]] = 1;
-            break;
-        case LABEL:
             break;
         case HALT:
             FINISHED = 1;
@@ -160,11 +170,10 @@ int main(){
     string program = "machineCode.txt";
     
     
-    // loads the program into the instructionMemory and finds all the labels for branches, putting them in table: "LABELS"
+    // loads the program into the instructionMemory and finds all the 
+    //labels for branches, putting them in table: "LABELS"
     loadIntoMemory(program);
     
-    // finds where the Labels are so they can easily be accesed for branches
-    findLabels(instructionMemory);
 
 
     while(FINISHED != 1){
@@ -184,15 +193,6 @@ int main(){
     cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << (float(instructionsExecuted)/float(CLOCK)) << endl <<endl;
 } 
 
-// int main1(){
-
-
-//     int CLOCK = 0;
-//     int instructionsExecuted = 0;
-//     int PC = 1;
-//     string program = "machineCode.txt";
-//     loadIntoMemory(program);
-//     findLabels(instructionMemory);
-//     opline instruction = decode("Bre B2 r5, r3", &CLOCK);
-//     cout << "ins: " << instruction.operation << " label: " << instruction.label << " var1: " << instruction.vars[0] << " var2: " << instruction.vars[1] << " var3:" << instruction.vars[2] << " " << endl;
-// }
+int main1(){
+    return 0;
+}

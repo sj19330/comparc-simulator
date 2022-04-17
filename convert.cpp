@@ -20,13 +20,14 @@ op decodeOp(string op){
     else if(op == "Mod")return MOD;
     else if(op == "Ld")return LD;
     else if(op == "Ldi")return LDI;
+    else if(op == "Mv")return MV;
     else if(op == "Str")return STR;
+    else if(op == "Stri")return STRI;
     else if(op == "Brlt")return BRLT;
     else if(op == "Brne")return BRNE;
     else if(op == "Bre")return BRE;    
     else if(op == "Br")return BR;
     else if(op == "Cmp")return CMP;
-    else if(op == "Label:") return LABEL;
     else if(op == "Halt") return HALT;
     else return BLANK;
 }
