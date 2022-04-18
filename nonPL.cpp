@@ -17,45 +17,51 @@ public:
         op operation;
         vector<int> vars;
         string label;
+        bool branch;
     } typedef opline;
 
-    //////////////////////////////      Loading in program and initialising
-    unordered_map<string, int> loadIntoMemory(string *instructionMemory, string program){
-        vector<string> instructions = readtxtFile(program);
-        unordered_map<string, int> LABELS;
-        int j = 0;
-        for(int i = 0; i<instructions.size(); i++){
-            vector<string> line = split(instructions[i]);
-            if(line[0] == "Label:"){
-                LABELS[line[1]] = j+1;
-            }
-            else{
-                instructionMemory[j] = instructions[i];
-                j++;
-            }   
-        }
-        return LABELS;
-    }
+    struct fetchReturn{
+        string instruction;
+        bool branch;
+    } typedef fetchReturn;
 
     //////////////////////////////      Stages
 
     ///// fetch simulator
-    string fetch(string instructions[], int *PC){
-        string instruction = instructions[(*PC-1)];
-        split(instruction);
-        return instruction;
+    ///// helper function that checks if an instruction being fetched is a branch or not
+    bool checkIfBranch(string instruction){
+        bool branch = false;
+        vector<string> check = split(instruction);
+        if(check[0] == "Br"||check[0] == "Bre"||check[0] == "Brne"||check[0] == "Brlt"){
+            branch = true;
+        }
+        return branch;
+    }
+
+    ///// gets the line from instructions corresponding to where the program counter is currently pointing
+    fetchReturn fetch(string instructions[], int *PC){
+        fetchReturn val;
+        val.instruction = instructions[(*PC-1)];
+        val.branch = checkIfBranch(val.instruction);
+        return val;
+
     }
 
     ///// decode simulator
-    opline decode(string line){
+    ///// splits the line into an opcode and variables for the computer to execute
+    opline decode(fetchReturn fetchedInstruction){
         opline opline;
         vector<int> decodedElem;
-        vector<string> elements = split(line);
+        vector<string> elements = split(fetchedInstruction.instruction);
 
         opline.operation = decodeOp(elements[0]);
-        if(opline.operation == BR || opline.operation == BRE || opline.operation == BRNE || opline.operation == BRLT){
+        if(fetchedInstruction.branch){
             opline.label = elements[1];
             elements.erase(elements.begin());
+            opline.branch = true;
+        }
+        else{
+            opline.branch = false;
         }
         elements.erase(elements.begin());
         for(int i = 0; i < elements.size(); i++){
@@ -63,11 +69,12 @@ public:
             decodedElem.push_back(elem);
         }
         opline.vars = decodedElem;
-        cout << line  << endl;
+        cout << fetchedInstruction.instruction  << endl;
         return opline; 
     }
 
     ///// execute simulator 
+    ///// takes the opcode and vars and executes accordingly
     void execute(opline line, float *registers, float *memory, unordered_map<string, int> LABELS, int *PC, int *FINISHED){
         float val;
         switch(line.operation){
@@ -147,12 +154,11 @@ public:
     /////////////////////////////      Main loop
     void run(){
 
-
+        // set up 
         float registers[32];
         fill_n(registers, 32,0);
         float memory[516];
         fill_n(memory, 516, 0);
-
         string instructionMemory[64];
         int FINISHED = 0;
         int CLOCK = 0;
@@ -166,14 +172,16 @@ public:
         unordered_map<string, int> LABELS = loadIntoMemory(instructionMemory, program);
         
         
+        //unpipelined loop
         while(FINISHED != 1){
-            //gets the line from instructions corresponding to where the program counter is currently pointing
-            string instructionString = fetch(instructionMemory, &PC);
-            //splits the line into an opcode and variables for the computer to execute
-            opline instruction = decode(instructionString);
-            //takes the opcode and vars and executes accordingly
+
+            fetchReturn fetchedInstruction = fetch(instructionMemory, &PC);
+            opline instruction = decode(fetchedInstruction);
+            cout << "Branch: " << instruction.branch << endl;
             execute(instruction, registers, memory, LABELS, &PC, &FINISHED);   
             instructionsExecuted++;
+
+            //print out
             CLOCK = CLOCK + 3;
             cout << "registers: ";
             for(int i = 0; i<32; i++){

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <unordered_map>
 #include "headers/parser.h"
 
 using namespace std;
@@ -39,4 +40,22 @@ vector<string> split (string line){
         words.push_back(word);
     }
     return words;
+}
+
+///////////////////////////////     
+unordered_map<string, int> loadIntoMemory(string *instructionMemory, string program){
+    vector<string> instructions = readtxtFile(program);
+    unordered_map<string, int> LABELS;
+    int j = 0;
+    for(int i = 0; i<instructions.size(); i++){
+        vector<string> line = split(instructions[i]);
+        if(line[0] == "Label:"){
+            LABELS[line[1]] = j+1;
+        }
+        else{
+            instructionMemory[j] = instructions[i];
+            j++;
+        }   
+    }
+    return LABELS;
 }

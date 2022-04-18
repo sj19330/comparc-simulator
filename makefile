@@ -4,10 +4,10 @@ exec: simulator.o convert.o parser.o pipelined.o nonPL.o
 nonPL.o: nonPL.cpp
 	g++ -c nonPL.cpp
 
-pipelined.o: pipelined.cpp
+pipelined.o: pipelined.cpp nonPL.cpp
 	g++ -c pipelined.cpp 
 
-simulator.o: simulator.cpp pipelined.cpp
+simulator.o: simulator.cpp pipelined.cpp nonPL.cpp
 	g++ -c simulator.cpp
 
 convert.o: convert.cpp headers/convert.h
