@@ -12,3 +12,5 @@ vector<string> readtxtFile(string);
 
 ////reads in a string (a line from a text file) and seperates it into words that are seperated by a space
 vector<string> split (string);
+
+unordered_map<string, int> loadIntoMemory(string *, string);
