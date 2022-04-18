@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include "nonPL.cpp"
+#include <queue>
 
 
 
@@ -18,6 +19,7 @@ public:
         fetchReturn val;
         val.instruction = instructions[(*PC-1)];
         val.branch = checkIfBranch(val.instruction);
+        *PC = *PC + 1;
         return val;
 
     }
@@ -44,7 +46,6 @@ public:
             decodedElem.push_back(elem);
         }
         opline.vars = decodedElem;
-        cout << fetchedInstruction.instruction  << endl;
         return opline; 
     }
 
@@ -81,7 +82,6 @@ public:
             case LD:
                 registers[line.vars[0]] = memory[int(registers[line.vars[1]]) + int(registers[line.vars[2]])];
             case LDI:
-                cout << line.vars[0] << endl;
                 registers[line.vars[0]] = line.vars[1];
                 break;
             case MV:
@@ -95,17 +95,16 @@ public:
                 memory[int(registers[line.vars[1]]) + int(registers[line.vars[2]])] = line.vars[0];
                 break;
             case BRNE:
-                if(registers[line.vars[0]] != registers[line.vars[1]]) *PC = LABELS[line.label]-1;
+                if(registers[line.vars[0]] != registers[line.vars[1]]) *PC = LABELS[line.label];
                 break;
             case BRE:
-                if(registers[line.vars[0]] == registers[line.vars[1]]) *PC = LABELS[line.label]-1;
+                if(registers[line.vars[0]] == registers[line.vars[1]]) *PC = LABELS[line.label];
                 break;
             case BRLT:
-                if(!(registers[line.vars[0]] < registers[line.vars[1]])) *PC = LABELS[line.label]-1;
+                if(!(registers[line.vars[0]] < registers[line.vars[1]])) *PC = LABELS[line.label];
                 break;
             case BR: 
-                cout << LABELS[line.label] << endl;
-                *PC = LABELS[line.label]-1;
+                *PC = LABELS[line.label];
                 break;
             case CMP: 
                 if(registers[line.vars[1]]< registers[line.vars[2]]) registers[line.vars[0]] = -1;
@@ -119,8 +118,6 @@ public:
             default:
                 ;
         }
-        *PC = *PC +1;
-        cout << *PC << endl;
         return line.branch;
     }
 
@@ -136,42 +133,84 @@ public:
         int FINISHED = 0;
         int CLOCK = 0;
         int instructionsExecuted = 0;
-        int PC = 1;
         string program = "machineCode.txt";
+        int programLength;
+
+        int PC = 1;
         bool branch = false;
             
         
         // loads the program into the instructionMemory and finds all the 
         // labels for branches, putting them in table: "LABELS"
-        unordered_map<string, int> LABELS = loadIntoMemory(instructionMemory, program);
-        
+        // also fills program length with the length of the program
+        unordered_map<string, int> LABELS = loadIntoMemory(instructionMemory, program, &programLength);
+         cout << LABELS["B1"] << endl;
+
+        queue<fetchReturn> decodeInput;
+        queue<opline> executeInput;
         
         //unpipelined loop
         while(FINISHED != 1){
+
+            int thisPC = PC;
+            cout << endl << "PC: " << PC << endl;
+            bool decodeHasBeenRun = false;
+            bool fetchHasBeenRun = false;
             fetchReturn fetched;
-            
+            opline instruction;
+            opline executable;
+            fetchReturn nextDecode;
+
             if(!branch){
                 //fetch
-                fetched = fetch(instructionMemory, &PC);
-                branch = fetched.branch;
+                if(thisPC <= programLength){
+                    fetched = fetch(instructionMemory, &thisPC);
+                    fetchHasBeenRun = true;
+                    branch = fetched.branch;
+                }
             }
             //decode
-            opline instruction = decode(fetched);
-            //execute
-            bool b = execute(instruction, registers, memory, LABELS, &PC, &FINISHED); 
-            if(b){
-                branch = false;
+            if(decodeInput.size() > 0){
+                nextDecode = decodeInput.front();
+                decodeInput.pop();
+                instruction = decode(nextDecode);
+                decodeHasBeenRun = true;
             }
-            instructionsExecuted++;
+            
+            //execute
+            if(executeInput.size() > 0){
+                executable = executeInput.front();
+                executeInput.pop();
+                bool b = execute(executable, registers, memory, LABELS, &thisPC, &FINISHED); 
+                if(b){
+                    branch = false;
+                }
+                instructionsExecuted++;
+            }
+
+            //update
+            if(fetchHasBeenRun){
+                decodeInput.push(fetched);
+            }
+            if(decodeHasBeenRun){
+                executeInput.push(instruction);
+            }
+            PC = thisPC;
 
             //print out
-            CLOCK = CLOCK + 3;
+            CLOCK = CLOCK + 1;
+            cout << "Fetched instruction: " << fetched.instruction << endl;
+            cout << "Decoded instruction: " << nextDecode.instruction << endl;
+            cout << "Executed instruction: " << executable.operation << endl;
             cout << "registers: ";
             for(int i = 0; i<32; i++){
                 cout << registers[i] << " ";
             } 
-            cout << endl << "PC: " << PC << endl << endl;
+            cout << endl << "Clock cycles: " << CLOCK << endl;
+            cout << "PC: " << PC << endl << endl;
+            
         }
-        cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << (float(instructionsExecuted)/float(CLOCK)) << endl << " Pipelined" << endl <<endl;
+
+        cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << ((round(float(instructionsExecuted)/float(CLOCK)*100))/100) << endl << " Pipelined" << endl <<endl;
     } 
 };

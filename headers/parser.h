@@ -14,3 +14,5 @@ vector<string> readtxtFile(string);
 vector<string> split (string);
 
 unordered_map<string, int> loadIntoMemory(string *, string);
+
+unordered_map<string, int> loadIntoMemory(string *, string, int *);

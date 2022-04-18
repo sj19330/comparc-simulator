@@ -5,8 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include "pipelined.cpp"
-
-
+#include <queue>
 using namespace std;
 
 int main(){
@@ -23,6 +22,5 @@ int main(){
 
     }
     else{
-        cout << "Please pick a valid setting." << endl;
     }
 }
