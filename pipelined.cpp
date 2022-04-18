@@ -13,6 +13,7 @@ using namespace std;
 class Pipeline:public NonPipeline{
 public:
     void run(){
-        cout << " this is the new run function" << endl;
+
+        cout << "love that shit" << endl;
     }
 };

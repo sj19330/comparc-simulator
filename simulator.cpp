@@ -5,7 +5,6 @@
 #include <string>
 #include <unordered_map>
 #include "pipelined.cpp"
-#include "test2.cpp"
 
 
 using namespace std;
