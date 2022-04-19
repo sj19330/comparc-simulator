@@ -1,5 +1,5 @@
-Ldi r0, 18
-Ldi r1, 12
+Ldi r0, 24
+Ldi r1, 18
 Ldi r2, 1
 Ldi r3, 1
 Ldi r20, 0

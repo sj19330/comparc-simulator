@@ -9,7 +9,7 @@
 using namespace std;
 
 int main(){
-    string setting = "nonPL";
+    string setting = "pipelined";
     if(setting == "nonPL"){
         NonPipeline simulator;
         simulator.run();
@@ -22,5 +22,6 @@ int main(){
 
     }
     else{
+
     }
 }

@@ -26,7 +26,6 @@ op decodeOp(string op){
     else if(op == "Br")return BR;
     else if(op == "Cmp")return CMP;
     else if(op == "Halt") return HALT;
-    else return BLANK;
 }
 
 int decodeReg(string r){

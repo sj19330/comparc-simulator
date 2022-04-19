@@ -19,105 +19,125 @@ public:
         fetchReturn val;
         val.instruction = instructions[(*PC-1)];
         val.branch = checkIfBranch(val.instruction);
-        *PC = *PC + 1;
+        *PC = *PC + 1; ///difference
         return val;
 
     }
 
-    ///// decode simulator
-    ///// splits the line into an opcode and variables for the computer to execute
-    opline decode(fetchReturn fetchedInstruction){
-        opline opline;
-        vector<int> decodedElem;
-        vector<string> elements = split(fetchedInstruction.instruction);
 
-        opline.operation = decodeOp(elements[0]);
-        if(fetchedInstruction.branch){
-            opline.label = elements[1];
-            elements.erase(elements.begin());
-            opline.branch = true;
+    bool checkInputSafety(opline line, Register *registers){
+        bool check1 = true;
+        bool check2 = true;
+        if(line.operation != BR && line.operation != LDI && line.operation != HALT){
+            check1 = registers[line.vars[1]].safe;
+            if(line.operation != ADDI && line.operation != SUBI && line.operation != MV){
+                if(line.operation != BRNE && line.operation != BRE && line.operation != BRLT){
+                    check2 = registers[line.vars[2]].safe;
+                }else{
+                    check2 = registers[line.vars[0]].safe;
+                }
+            }
         }
-        else{
-            opline.branch = false;
+        if(check1 && check2){
+            return true;
+        }else{
+            return false;
         }
-        elements.erase(elements.begin());
-        for(int i = 0; i < elements.size(); i++){
-            int elem = decodeReg(elements[i]);
-            decodedElem.push_back(elem);
-        }
-        opline.vars = decodedElem;
-        return opline; 
     }
 
-    bool execute(opline line, float *registers, float *memory, unordered_map<string, int> LABELS, int *PC, int *FINISHED){
-        float val;
+
+    executeReturn execute(opline line, Register *registers, float *memory, unordered_map<string, int> LABELS, int *PC, int *FINISHED, int *instructionsExecuted){
+        executeReturn val;
+        val.value = 0;
+        val.skip = false;
+        val.finished = false;
+        val.branch = line.branch;
+        val.bubble = false;
+        if(!line.branch && line.operation != HALT && line.operation != STR){
+            val.storeReg = line.vars[0];
+            registers[line.vars[0]].safe = false;
+        }
         switch(line.operation){
             case ADD:
-                registers[line.vars[0]] =  registers[line.vars[1]] + registers[line.vars[2]];
+                val.value =  registers[line.vars[1]].value + registers[line.vars[2]].value;
                 break;
             case ADDI:
-                registers[line.vars[0]] =  registers[line.vars[1]] + line.vars[2];
+                val.value =  registers[line.vars[1]].value + line.vars[2];
                 break;
             case SUB:
-                registers[line.vars[0]] =  registers[line.vars[1]] - registers[line.vars[2]];
+                val.value =  registers[line.vars[1]].value - registers[line.vars[2]].value;
                 break;
             case SUBI:
-                registers[line.vars[0]] =  registers[line.vars[1]] - line.vars[2];
+                val.value =  registers[line.vars[1]].value - line.vars[2];
                 break;
             case MUL: 
-                registers[line.vars[0]] =  registers[line.vars[1]] * registers[line.vars[2]];
+                val.value =  registers[line.vars[1]].value * registers[line.vars[2]].value;
                 break;
             case DIV:
-                registers[line.vars[0]] =  registers[line.vars[1]] / registers[line.vars[2]];
+                val.value =  registers[line.vars[1]].value / registers[line.vars[2]].value;
                 break;
             case MOD:
-                registers[line.vars[0]] = int(registers[line.vars[1]]) % int(registers[line.vars[2]]);
+                val.value = int(registers[line.vars[1]].value) % int(registers[line.vars[2]].value);
                 break;
             case LD:
-                registers[line.vars[0]] = memory[int(registers[line.vars[1]]) + int(registers[line.vars[2]])];
+                val.value = memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)];
             case LDI:
-                registers[line.vars[0]] = line.vars[1];
+                val.value = line.vars[1];
                 break;
             case MV:
-                registers[line.vars[0]] = registers[line.vars[1]];
+                val.value = registers[line.vars[1]].value;
                 break;
             case STR:
             // add somthing to make sure the values are ints before 
-                memory[int(registers[line.vars[1]]) + int(registers[line.vars[2]])] = registers[line.vars[0]];
+                memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)] = registers[line.vars[0]].value;
+                val.skip = true;
                 break;
             case BRNE:
-                if(registers[line.vars[0]] != registers[line.vars[1]]) *PC = LABELS[line.label];
+                if(registers[line.vars[0]].value != registers[line.vars[1]].value) *PC = LABELS[line.label];
+                val.skip = true;
                 break;
             case BRE:
-                if(registers[line.vars[0]] == registers[line.vars[1]]) *PC = LABELS[line.label];
+                if(registers[line.vars[0]].value == registers[line.vars[1]].value) *PC = LABELS[line.label];
+                val.skip = true;
                 break;
             case BRLT:
-                if(!(registers[line.vars[0]] < registers[line.vars[1]])) *PC = LABELS[line.label];
+                if(!(registers[line.vars[0]].value < registers[line.vars[1]].value)) *PC = LABELS[line.label];
+                val.skip = true;
                 break;
             case BR: 
                 *PC = LABELS[line.label];
+                val.skip = true;
                 break;
             case CMP: 
-                if(registers[line.vars[1]]< registers[line.vars[2]]) registers[line.vars[0]] = -1;
-                else if (registers[line.vars[1]] == registers[line.vars[2]]) registers[line.vars[0]] = 0;
-                else if (registers[line.vars[1]] > registers[line.vars[2]]) registers[line.vars[0]] = 1;
+                if(registers[line.vars[1]].value< registers[line.vars[2]].value) val.value = -1;
+                else if (registers[line.vars[1]].value == registers[line.vars[2]].value) val.value = 0;
+                else if (registers[line.vars[1]].value > registers[line.vars[2]].value) val.value = 1;
                 break;
             case HALT:
-                *FINISHED = 1;
-            case BLANK:
-                break;
+                val.finished = true;
+                // *FINISHED = 1;
             default:
                 ;
         }
-        return line.branch;
+        *instructionsExecuted = *instructionsExecuted + 1;
+        return val;
     }
+
+    void writeBack(executeReturn executedInstruction, Register *registers, int *FINISHED){
+        if(executedInstruction.finished){
+            *FINISHED = 1;
+        }else{
+            registers[executedInstruction.storeReg].value = executedInstruction.value;
+            registers[executedInstruction.storeReg].safe = true;
+        }
+    }
+
 
 
     void run(){
 
         // set up 
-        float registers[32];
-        fill_n(registers, 32,0);
+        Register registers[32];
         float memory[516];
         fill_n(memory, 516, 0);
         string instructionMemory[64];
@@ -126,6 +146,7 @@ public:
         int instructionsExecuted = 0;
         string program = "machineCode.txt";
         int programLength;
+        int bubbles;
 
         int PC = 1;
         bool branch = false;
@@ -135,22 +156,31 @@ public:
         // labels for branches, putting them in table: "LABELS"
         // also fills program length with the length of the program
         unordered_map<string, int> LABELS = loadIntoMemory(instructionMemory, program, &programLength);
-         cout << LABELS["B1"] << endl;
-
+ 
         queue<fetchReturn> decodeInput;
         queue<opline> executeInput;
+        queue<executeReturn> memAccInput;
+        queue<executeReturn> WBInput;
         
         //unpipelined loop
         while(FINISHED != 1){
 
             int thisPC = PC;
             cout << endl << "PC: " << PC << endl;
+
             bool decodeHasBeenRun = false;
             bool fetchHasBeenRun = false;
+            bool executeHasBeenRun = false;
+            bool memAccHasBeenRun = false;
+            //maybe these can be one
             fetchReturn fetched;
+            fetchReturn fetchedInstruction;
             opline instruction;
-            opline executable;
-            fetchReturn nextDecode;
+            opline instructionExecutable;
+            executeReturn executedInstruction;
+            executeReturn accessInstructionMemory;
+            bool safe;
+            executeReturn WBin; 
 
             if(!branch){
                 //fetch
@@ -162,43 +192,72 @@ public:
             }
             //decode
             if(decodeInput.size() > 0){
-                nextDecode = decodeInput.front();
+                fetchedInstruction = decodeInput.front();
                 decodeInput.pop();
-                instruction = decode(nextDecode);
+                instruction = decode(fetchedInstruction);
                 decodeHasBeenRun = true;
             }
             
             //execute
             if(executeInput.size() > 0){
-                executable = executeInput.front();
-                executeInput.pop();
-                bool b = execute(executable, registers, memory, LABELS, &thisPC, &FINISHED); 
-                if(b){
-                    branch = false;
+                instructionExecutable = executeInput.front();
+                bool safe = checkInputSafety(instructionExecutable, registers);
+                if(safe){
+                    executedInstruction = execute(instructionExecutable, registers, memory, LABELS, &thisPC, &FINISHED, &instructionsExecuted);
+                    executeInput.pop();
+                    if(executedInstruction.branch){
+                        branch = false;
+                    }
+                    executeHasBeenRun = true;
+                }else{
+                    cout << "NOT SAFE" << endl;
                 }
-                instructionsExecuted++;
+            }
+            
+            //memacc
+            if(memAccInput.size() > 0){
+                accessInstructionMemory = memAccInput.front();
+                safe = memoryAccess(accessInstructionMemory, registers);
+                memAccHasBeenRun = true;
+            }
+            cout << "im  here" << endl;
+
+            //WB
+            if(WBInput.size() > 0){
+                WBin = WBInput.front();
+                WBInput.pop();
+                writeBack(WBin, registers, &FINISHED);
             }
 
-            //update
+            //update queues
             if(fetchHasBeenRun){
                 decodeInput.push(fetched);
             }
             if(decodeHasBeenRun){
                 executeInput.push(instruction);
             }
+            if(executeHasBeenRun && !executedInstruction.skip){
+                memAccInput.push(executedInstruction);
+            }
+            if(memAccHasBeenRun && safe){
+                memAccInput.pop();
+                WBInput.push(accessInstructionMemory);
+            }
+
             PC = thisPC;
 
             //print out
             CLOCK = CLOCK + 1;
             cout << "Fetched instruction: " << fetched.instruction << endl;
-            cout << "Decoded instruction: " << nextDecode.instruction << endl;
-            cout << "Executed instruction: " << executable.operation << endl;
-            cout << "registers: ";
+            cout << "Decoded instruction: " << fetchedInstruction.instruction << endl;
+            cout << "Executed instruction: ";
+            if(executeHasBeenrun){cout << instructionExecutable.operation;}
+            cout << endl << "Registers: ";
             for(int i = 0; i<32; i++){
-                cout << registers[i] << " ";
-            } 
+                cout << registers[i].value << " ";
+            }
             cout << endl << "Clock cycles: " << CLOCK << endl;
-            cout << "PC: " << PC << endl << endl;
+            cout << "PC: " << PC << endl << registers[1].safe << endl << endl;
             
         }
 

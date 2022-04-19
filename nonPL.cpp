@@ -15,7 +15,7 @@ public:
 
     struct Register{
         float value = 0;
-        bool valid = true;
+        bool safe = true;
     };
 
     struct fetchReturn{
@@ -31,9 +31,11 @@ public:
     } typedef opline;
 
     struct executeReturn{
-        float value = 0;
+        float value;
         int storeReg;
-        bool skip = false;
+        bool skip;
+        bool branch;
+        bool finished;
     };
 
     //////////////////////////////      Stages
@@ -54,6 +56,7 @@ public:
         fetchReturn val;
         val.instruction = instructions[(*PC-1)];
         val.branch = checkIfBranch(val.instruction);
+        cout << val.instruction  << endl;
         return val;
 
     }
@@ -80,14 +83,12 @@ public:
             decodedElem.push_back(elem);
         }
         opline.vars = decodedElem;
-        cout << fetchedInstruction.instruction  << endl;
         return opline; 
     }
 
     ///// execute simulator 
     ///// takes the opcode and vars and executes accordingly
-    executeReturn execute(opline line, Register *registers, float *memory, unordered_map<string, int> LABELS, int *PC, int *FINISHED){
-        // float val;
+    executeReturn execute(opline line, Register *registers, float *memory, unordered_map<string, int> LABELS, int *PC, int *FINISHED, int *instructionsExecuted){
         executeReturn val;
         if(!line.branch && line.operation != HALT){
             val.storeReg = line.vars[0];
@@ -150,26 +151,24 @@ public:
                 break;
             case HALT:
                 *FINISHED = 1;
-            case BLANK:
                 val.skip = true;
                 break;
             default:
                 ;
         }
         *PC = *PC +1;
+        *instructionsExecuted = *instructionsExecuted + 1;
         return val;
     }
 
 
     bool memoryAccess(executeReturn executedInstruction, Register registers[]){
-        return registers[executedInstruction.storeReg].valid;
-        // return registers[0].valid;
+        return true; // still in order so doesnt matter yet
     }
 
 
     void writeBack(executeReturn executedInstruction, Register *registers){
         registers[executedInstruction.storeReg].value = executedInstruction.value;
-        registers[executedInstruction.storeReg].valid = true;
     }
 
 
@@ -178,7 +177,6 @@ public:
 
         // set up 
         Register registers[32];
-        // fill_n(registers, 32,0);
         float memory[516];
         fill_n(memory, 516, 0);
         string instructionMemory[64];
@@ -197,15 +195,13 @@ public:
         //unpipelined loop
         while(FINISHED != 1){
 
-            fetchReturn fetchedInstruction = fetch(instructionMemory, &PC);
-            opline instruction = decode(fetchedInstruction);
-            executeReturn executedInstruction = execute(instruction, registers, memory, LABELS, &PC, &FINISHED);   
-            instructionsExecuted++;
-            cout << "here" << endl;
+            fetchReturn fetchedInstruction = fetch(instructionMemory, &PC);//fetch
+            opline instruction = decode(fetchedInstruction);//decode
+            executeReturn executedInstruction = execute(instruction, registers, memory, LABELS, &PC, &FINISHED, &instructionsExecuted);  //execute 
             if(!executedInstruction.skip){
-                bool ready = memoryAccess(executedInstruction, registers);
+                bool ready = memoryAccess(executedInstruction, registers);//mem access
                 if(ready){
-                    writeBack(executedInstruction, registers);
+                    writeBack(executedInstruction, registers);//writeback
                 }
                 CLOCK = CLOCK + 5;
             }else{
