@@ -67,14 +67,8 @@ public:
             case MUL: 
                 registers[line.vars[0]] =  registers[line.vars[1]] * registers[line.vars[2]];
                 break;
-            case MULI: 
-                registers[line.vars[0]] =  registers[line.vars[1]] * line.vars[2];
-                break;
             case DIV:
                 registers[line.vars[0]] =  registers[line.vars[1]] / registers[line.vars[2]];
-                break;
-            case DIVI:
-                registers[line.vars[0]] =  registers[line.vars[1]] / line.vars[2];
                 break;
             case MOD:
                 registers[line.vars[0]] = int(registers[line.vars[1]]) % int(registers[line.vars[2]]);
@@ -90,9 +84,6 @@ public:
             case STR:
             // add somthing to make sure the values are ints before 
                 memory[int(registers[line.vars[1]]) + int(registers[line.vars[2]])] = registers[line.vars[0]];
-                break;
-            case STRI:
-                memory[int(registers[line.vars[1]]) + int(registers[line.vars[2]])] = line.vars[0];
                 break;
             case BRNE:
                 if(registers[line.vars[0]] != registers[line.vars[1]]) *PC = LABELS[line.label];

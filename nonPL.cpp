@@ -13,6 +13,16 @@ using namespace std;
 class NonPipeline{
 public:
 
+    struct Register{
+        float value = 0;
+        bool valid = true;
+    };
+
+    struct fetchReturn{
+        string instruction;
+        bool branch;
+    } typedef fetchReturn;
+
     struct opline {
         op operation;
         vector<int> vars;
@@ -20,10 +30,11 @@ public:
         bool branch;
     } typedef opline;
 
-    struct fetchReturn{
-        string instruction;
-        bool branch;
-    } typedef fetchReturn;
+    struct executeReturn{
+        float value = 0;
+        int storeReg;
+        bool skip = false;
+    };
 
     //////////////////////////////      Stages
 
@@ -75,79 +86,90 @@ public:
 
     ///// execute simulator 
     ///// takes the opcode and vars and executes accordingly
-    void execute(opline line, float *registers, float *memory, unordered_map<string, int> LABELS, int *PC, int *FINISHED){
-        float val;
+    executeReturn execute(opline line, Register *registers, float *memory, unordered_map<string, int> LABELS, int *PC, int *FINISHED){
+        // float val;
+        executeReturn val;
+        if(!line.branch && line.operation != HALT){
+            val.storeReg = line.vars[0];
+        }
         switch(line.operation){
             case ADD:
-                registers[line.vars[0]] =  registers[line.vars[1]] + registers[line.vars[2]];
+                val.value =  registers[line.vars[1]].value + registers[line.vars[2]].value;
                 break;
             case ADDI:
-                registers[line.vars[0]] =  registers[line.vars[1]] + line.vars[2];
+                val.value =  registers[line.vars[1]].value + line.vars[2];
                 break;
             case SUB:
-                registers[line.vars[0]] =  registers[line.vars[1]] - registers[line.vars[2]];
+                val.value =  registers[line.vars[1]].value - registers[line.vars[2]].value;
                 break;
             case SUBI:
-                registers[line.vars[0]] =  registers[line.vars[1]] - line.vars[2];
+                val.value =  registers[line.vars[1]].value - line.vars[2];
                 break;
             case MUL: 
-                registers[line.vars[0]] =  registers[line.vars[1]] * registers[line.vars[2]];
-                break;
-            case MULI: 
-                registers[line.vars[0]] =  registers[line.vars[1]] * line.vars[2];
+                val.value =  registers[line.vars[1]].value * registers[line.vars[2]].value;
                 break;
             case DIV:
-                registers[line.vars[0]] =  registers[line.vars[1]] / registers[line.vars[2]];
+                val.value =  registers[line.vars[1]].value / registers[line.vars[2]].value;
                 break;
-            case DIVI:
-                registers[line.vars[0]] =  registers[line.vars[1]] / line.vars[2];
-                break;
-            case MOD:
-                registers[line.vars[0]] = int(registers[line.vars[1]]) % int(registers[line.vars[2]]);
-                break;
+            case MOD:///
+                val.value = int(registers[line.vars[1]].value) % int(registers[line.vars[2]].value);
+                break;///this needs to go
             case LD:
-                registers[line.vars[0]] = memory[int(registers[line.vars[1]]) + int(registers[line.vars[2]])];
+                val.value = memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)];
             case LDI:
-                cout << line.vars[0] << endl;
-                registers[line.vars[0]] = line.vars[1];
+                val.value = line.vars[1];
                 break;
             case MV:
-                registers[line.vars[0]] = registers[line.vars[1]];
+                val.value = registers[line.vars[1]].value;
                 break;
             case STR:
             // add somthing to make sure the values are ints before 
-                memory[int(registers[line.vars[1]]) + int(registers[line.vars[2]])] = registers[line.vars[0]];
-                break;
-            case STRI:
-                memory[int(registers[line.vars[1]]) + int(registers[line.vars[2]])] = line.vars[0];
+                memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)] = registers[line.vars[0]].value;
+                val.skip = true;
                 break;
             case BRNE:
-                if(registers[line.vars[0]] != registers[line.vars[1]]) *PC = LABELS[line.label]-1;
+                if(registers[line.vars[0]].value != registers[line.vars[1]].value) *PC = LABELS[line.label]-1;
+                val.skip = true;
                 break;
             case BRE:
-                if(registers[line.vars[0]] == registers[line.vars[1]]) *PC = LABELS[line.label]-1;
+                if(registers[line.vars[0]].value == registers[line.vars[1]].value) *PC = LABELS[line.label]-1;
+                val.skip = true;
                 break;
             case BRLT:
-                if(!(registers[line.vars[0]] < registers[line.vars[1]])) *PC = LABELS[line.label]-1;
+                if(!(registers[line.vars[0]].value < registers[line.vars[1]].value)) *PC = LABELS[line.label]-1;
+                val.skip = true;
                 break;
             case BR: 
-                cout << LABELS[line.label] << endl;
+                val.skip = true;
                 *PC = LABELS[line.label]-1;
                 break;
             case CMP: 
-                if(registers[line.vars[1]]< registers[line.vars[2]]) registers[line.vars[0]] = -1;
-                else if (registers[line.vars[1]] == registers[line.vars[2]]) registers[line.vars[0]] = 0;
-                else if (registers[line.vars[1]] > registers[line.vars[2]]) registers[line.vars[0]] = 1;
+                if(registers[line.vars[1]].value < registers[line.vars[2]].value) val.value = -1;
+                else if (registers[line.vars[1]].value == registers[line.vars[2]].value) val.value = 0;
+                else if (registers[line.vars[1]].value > registers[line.vars[2]].value) val.value = 1;
                 break;
             case HALT:
                 *FINISHED = 1;
             case BLANK:
+                val.skip = true;
                 break;
             default:
                 ;
         }
         *PC = *PC +1;
-        cout << *PC << endl;
+        return val;
+    }
+
+
+    bool memoryAccess(executeReturn executedInstruction, Register registers[]){
+        return registers[executedInstruction.storeReg].valid;
+        // return registers[0].valid;
+    }
+
+
+    void writeBack(executeReturn executedInstruction, Register *registers){
+        registers[executedInstruction.storeReg].value = executedInstruction.value;
+        registers[executedInstruction.storeReg].valid = true;
     }
 
 
@@ -155,8 +177,8 @@ public:
     void run(){
 
         // set up 
-        float registers[32];
-        fill_n(registers, 32,0);
+        Register registers[32];
+        // fill_n(registers, 32,0);
         float memory[516];
         fill_n(memory, 516, 0);
         string instructionMemory[64];
@@ -177,18 +199,25 @@ public:
 
             fetchReturn fetchedInstruction = fetch(instructionMemory, &PC);
             opline instruction = decode(fetchedInstruction);
-            cout << "Branch: " << instruction.branch << endl;
-            execute(instruction, registers, memory, LABELS, &PC, &FINISHED);   
+            executeReturn executedInstruction = execute(instruction, registers, memory, LABELS, &PC, &FINISHED);   
             instructionsExecuted++;
-
+            cout << "here" << endl;
+            if(!executedInstruction.skip){
+                bool ready = memoryAccess(executedInstruction, registers);
+                if(ready){
+                    writeBack(executedInstruction, registers);
+                }
+                CLOCK = CLOCK + 5;
+            }else{
+                CLOCK = CLOCK + 3;
+            }
             //print out
-            CLOCK = CLOCK + 3;
             cout << "registers: ";
             for(int i = 0; i<32; i++){
-                cout << registers[i] << " ";
+                cout << registers[i].value << " ";
             } 
             cout << endl << "PC: " << PC << endl << endl;
         }
-        cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << (float(instructionsExecuted)/float(CLOCK)) << endl <<endl;
+        cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << ((round(float(instructionsExecuted)/float(CLOCK)*100))/100) << endl <<endl;
     } 
 };
