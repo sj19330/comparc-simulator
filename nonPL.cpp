@@ -16,7 +16,7 @@ public:
     struct Register{
         float value = 0;
         bool safe = true;
-    };
+    }typedef Register;
 
     struct fetchReturn{
         string instruction;

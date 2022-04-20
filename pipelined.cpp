@@ -52,7 +52,6 @@ public:
         val.skip = false;
         val.finished = false;
         val.branch = line.branch;
-        val.bubble = false;
         if(!line.branch && line.operation != HALT && line.operation != STR){
             val.storeReg = line.vars[0];
             registers[line.vars[0]].safe = false;
@@ -172,6 +171,7 @@ public:
             bool fetchHasBeenRun = false;
             bool executeHasBeenRun = false;
             bool memAccHasBeenRun = false;
+            bool WBHasBeenRun = false;
             //maybe these can be one
             fetchReturn fetched;
             fetchReturn fetchedInstruction;
@@ -205,12 +205,12 @@ public:
                 if(safe){
                     executedInstruction = execute(instructionExecutable, registers, memory, LABELS, &thisPC, &FINISHED, &instructionsExecuted);
                     executeInput.pop();
+                    executeHasBeenRun = true;
                     if(executedInstruction.branch){
                         branch = false;
                     }
-                    executeHasBeenRun = true;
                 }else{
-                    cout << "NOT SAFE" << endl;
+                    cout << "NOT SAFE" << executeHasBeenRun<< endl;
                 }
             }
             
@@ -220,44 +220,60 @@ public:
                 safe = memoryAccess(accessInstructionMemory, registers);
                 memAccHasBeenRun = true;
             }
-            cout << "im  here" << endl;
 
             //WB
             if(WBInput.size() > 0){
                 WBin = WBInput.front();
                 WBInput.pop();
                 writeBack(WBin, registers, &FINISHED);
+                WBHasBeenRun = true;
             }
 
-            //update queues
+
+
+            //update queues and print out
             if(fetchHasBeenRun){
                 decodeInput.push(fetched);
+                cout << "Fetched instruction: " << fetched.instruction << endl;
+            }else{
+                cout << "Fetch was not ran this cycle." << endl;
             }
             if(decodeHasBeenRun){
                 executeInput.push(instruction);
+                cout << "Decoded instruction: " << fetchedInstruction.instruction << endl;
+            }else{
+                cout << "Decode was not ran this cycle." << endl;
             }
-            if(executeHasBeenRun && !executedInstruction.skip){
-                memAccInput.push(executedInstruction);
+            if(executeHasBeenRun){
+                cout << "Executed instruction: " << instructionExecutable.operation << endl;
+                if(!executedInstruction.skip){memAccInput.push(executedInstruction);}
+            }else{
+                cout << "Execute was not ran this cycle." << endl;
             }
             if(memAccHasBeenRun && safe){
                 memAccInput.pop();
                 WBInput.push(accessInstructionMemory);
+                cout << "Register accessed: " << accessInstructionMemory.storeReg << endl;
+            }else{
+                cout << "memAccess was not ran this cycle." << endl;
+            }
+            if(WBHasBeenRun){
+                cout << "value written back: " << WBin.value << " in register: " << WBin.storeReg << endl;
+            }else{
+                cout << "WriteBack was not ran this cycle." << endl;
             }
 
             PC = thisPC;
 
             //print out
             CLOCK = CLOCK + 1;
-            cout << "Fetched instruction: " << fetched.instruction << endl;
-            cout << "Decoded instruction: " << fetchedInstruction.instruction << endl;
-            cout << "Executed instruction: ";
-            if(executeHasBeenrun){cout << instructionExecutable.operation;}
-            cout << endl << "Registers: ";
+            cout << "Registers: ";
             for(int i = 0; i<32; i++){
                 cout << registers[i].value << " ";
             }
+
             cout << endl << "Clock cycles: " << CLOCK << endl;
-            cout << "PC: " << PC << endl << registers[1].safe << endl << endl;
+            cout << "PC: " << PC << endl << endl;
             
         }
 
