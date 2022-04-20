@@ -114,7 +114,6 @@ public:
                 break;
             case HALT:
                 val.finished = true;
-                // *FINISHED = 1;
             default:
                 ;
         }
