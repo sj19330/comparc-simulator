@@ -26,6 +26,26 @@ int main(){
         cout << " Superscalar complete" << endl;
     }
     else{
-        
+        class GF{
+        public:
+            void a(int i){
+                cout << i << endl;
+            }    
+        };
+        class Father: public GF{
+        public:
+            void a(int i, int j){
+                cout << i << " and " << j << endl;
+            }    
+        };
+        class Child: public Father{
+        public: 
+            void laugh(){
+                cout << "heheheh" << endl;
+            }
+        };
+
+        Child c;
+        c.laugh();
     }
 }

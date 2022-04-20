@@ -121,14 +121,9 @@ public:
         return val;
     }
 
-
-    bool memoryAccess(executeReturn executedInstruction, Register registers[], int *FINISHED){
-        if(executedInstruction.finished){
-            *FINISHED = 1;
-        }
+    bool memoryAccess(executeReturn executedInstruction, Register registers[]){
         return true; // still in order so doesnt matter yet
     }
-
 
     void writeBack(executeReturn executedInstruction, Register *registers){
         registers[executedInstruction.storeReg].value = executedInstruction.value;
@@ -175,7 +170,6 @@ public:
             bool fetchHasBeenRun = false;
             bool executeHasBeenRun = false;
             bool memAccHasBeenRun = false;
-            // bool WBHasBeenRun = false;
             //maybe these can be one
             fetchReturn fetched;
             fetchReturn fetchedInstruction;
@@ -225,19 +219,22 @@ public:
             //memacc
             if(memAccInput.size() > 0){
                 accessInstructionMemory = memAccInput.front();
-                safe = memoryAccess(accessInstructionMemory, registers, &FINISHED);
+                safe = memoryAccess(accessInstructionMemory, registers);
                 memAccHasBeenRun = true;
-                if(FINISHED == 1){cout << "Program Halting after this cycle" << endl;
-                }else{cout << "Register accessed: " << accessInstructionMemory.storeReg << endl;}
+                cout << "Register accessed: " << accessInstructionMemory.storeReg << endl;
             }else{cout << "memAccess was not ran this cycle." << endl;}
 
             //WB
             if(WBInput.size() > 0){
                 WBin = WBInput.front();
                 WBInput.pop();
-                writeBack(WBin, registers);
-                // WBHasBeenRun = true;
-                cout << "value written back: " << WBin.value << " in register: " << WBin.storeReg << endl;
+                if(!WBin.finished){
+                    writeBack(WBin, registers);
+                    cout << "value written back: " << WBin.value << " in register: " << WBin.storeReg << endl;
+                }else{
+                    cout << "Halting" << endl;
+                    FINISHED = 1;
+                }
             }else{cout << "WriteBack was not ran this cycle." << endl;}
 
 

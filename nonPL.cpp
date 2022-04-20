@@ -14,8 +14,12 @@ class NonPipeline{
 public:
 
     struct Register{
-        float value = 0;
-        bool safe = true;
+        float value;
+        bool safe;
+        Register(){
+            value = 0;
+            safe = true;
+        }
     }typedef Register;
 
     struct fetchReturn{

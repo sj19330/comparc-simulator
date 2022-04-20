@@ -1,12 +1,13 @@
-Ldi r0, 3
+Ldi r0, 4
 Ldi r1, 1
+Ldi r2, 2
+Mv r9, r2
+Ldi r3, 3
+Ldi r4, 4
+Ldi r5, 5
+Ldi r6, 6
+Ldi r7, 7
+Ldi r8, 8
+Ldi r10, 10
 Mv r2, r0
-Subi r3, r0, 1
-Label: B1
-Brlt B2 r1, r3
-Mul r2, r2, r3
-Subi r3, r3, 1
-Br B1
-Label: B2
-Mv r31, r2
 Halt
