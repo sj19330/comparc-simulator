@@ -1,5 +1,5 @@
-exec: simulator.o convert.o parser.o pipelined.o nonPL.o
-	g++ simulator.o convert.o parser.o pipelined.o nonPL.o -o exec
+exec: simulator.o convert.o parser.o superscalar.o pipelined.o nonPL.o
+	g++ simulator.o convert.o parser.o superscalar.o pipelined.o nonPL.o -o exec
 
 nonPL.o: nonPL.cpp
 	g++ -c nonPL.cpp
@@ -7,7 +7,10 @@ nonPL.o: nonPL.cpp
 pipelined.o: pipelined.cpp nonPL.cpp
 	g++ -c pipelined.cpp 
 
-simulator.o: simulator.cpp pipelined.cpp nonPL.cpp
+superscalar.o: superscalar.cpp pipelined.cpp nonPL.cpp
+	g++ -c superscalar.cpp
+
+simulator.o: simulator.cpp superscalar.cpp pipelined.cpp nonPL.cpp
 	g++ -c simulator.cpp
 
 convert.o: convert.cpp headers/convert.h

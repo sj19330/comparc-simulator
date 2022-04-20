@@ -4,12 +4,12 @@
 #include <fstream>
 #include <string>
 #include <unordered_map>
-#include "pipelined.cpp"
+#include "superscalar.cpp"
 #include <queue>
 using namespace std;
 
 int main(){
-    string setting = "pipelined";
+    string setting = "superscalar";
     if(setting == "nonPL"){
         NonPipeline simulator;
         simulator.run();
@@ -19,9 +19,13 @@ int main(){
         Pipeline simulator;
         simulator.run();
         cout << " Pipelined complete" << endl;
-
+    }
+    else if(setting == "superscalar"){
+        Superscalar simulator;
+        simulator.run();
+        cout << " Superscalar complete" << endl;
     }
     else{
-
+        
     }
 }
