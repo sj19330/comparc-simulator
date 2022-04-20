@@ -121,13 +121,18 @@ public:
         return val;
     }
 
-    void writeBack(executeReturn executedInstruction, Register *registers, int *FINISHED){
+
+    bool memoryAccess(executeReturn executedInstruction, Register registers[], int *FINISHED){
         if(executedInstruction.finished){
             *FINISHED = 1;
-        }else{
-            registers[executedInstruction.storeReg].value = executedInstruction.value;
-            registers[executedInstruction.storeReg].safe = true;
         }
+        return true; // still in order so doesnt matter yet
+    }
+
+
+    void writeBack(executeReturn executedInstruction, Register *registers){
+        registers[executedInstruction.storeReg].value = executedInstruction.value;
+        registers[executedInstruction.storeReg].safe = true;
     }
 
 
@@ -170,7 +175,7 @@ public:
             bool fetchHasBeenRun = false;
             bool executeHasBeenRun = false;
             bool memAccHasBeenRun = false;
-            bool WBHasBeenRun = false;
+            // bool WBHasBeenRun = false;
             //maybe these can be one
             fetchReturn fetched;
             fetchReturn fetchedInstruction;
@@ -187,15 +192,19 @@ public:
                     fetched = fetch(instructionMemory, &thisPC);
                     fetchHasBeenRun = true;
                     branch = fetched.branch;
+                    cout << "Fetched instruction: " << fetched.instruction << endl;
                 }
-            }
+                else{cout << "Fetch was not ran this cycle." << endl;}
+            }else{cout << "Fetch was not ran this cycle." << endl;}
+            
             //decode
             if(decodeInput.size() > 0){
                 fetchedInstruction = decodeInput.front();
                 decodeInput.pop();
                 instruction = decode(fetchedInstruction);
                 decodeHasBeenRun = true;
-            }
+                cout << "Decoded instruction: " << fetchedInstruction.instruction << endl;
+            }else{cout << "Decode was not ran this cycle." << endl;}
             
             //execute
             if(executeInput.size() > 0){
@@ -208,58 +217,44 @@ public:
                     if(executedInstruction.branch){
                         branch = false;
                     }
-                }else{
-                    cout << "NOT SAFE" << executeHasBeenRun<< endl;
-                }
-            }
+                    cout << "Executed instruction: " << instructionExecutable.operation << endl;
+                }else{cout << "NOT SAFE: Data Dependency.Execute was not ran this cycle." << endl;}
+            }else{cout << "Execute was not ran this cycle." << endl;
+}
             
             //memacc
             if(memAccInput.size() > 0){
                 accessInstructionMemory = memAccInput.front();
-                safe = memoryAccess(accessInstructionMemory, registers);
+                safe = memoryAccess(accessInstructionMemory, registers, &FINISHED);
                 memAccHasBeenRun = true;
-            }
+                if(FINISHED == 1){cout << "Program Halting after this cycle" << endl;
+                }else{cout << "Register accessed: " << accessInstructionMemory.storeReg << endl;}
+            }else{cout << "memAccess was not ran this cycle." << endl;}
 
             //WB
             if(WBInput.size() > 0){
                 WBin = WBInput.front();
                 WBInput.pop();
-                writeBack(WBin, registers, &FINISHED);
-                WBHasBeenRun = true;
-            }
+                writeBack(WBin, registers);
+                // WBHasBeenRun = true;
+                cout << "value written back: " << WBin.value << " in register: " << WBin.storeReg << endl;
+            }else{cout << "WriteBack was not ran this cycle." << endl;}
 
 
 
-            //update queues and print out
+            //update queues
             if(fetchHasBeenRun){
                 decodeInput.push(fetched);
-                cout << "Fetched instruction: " << fetched.instruction << endl;
-            }else{
-                cout << "Fetch was not ran this cycle." << endl;
             }
             if(decodeHasBeenRun){
                 executeInput.push(instruction);
-                cout << "Decoded instruction: " << fetchedInstruction.instruction << endl;
-            }else{
-                cout << "Decode was not ran this cycle." << endl;
             }
             if(executeHasBeenRun){
-                cout << "Executed instruction: " << instructionExecutable.operation << endl;
                 if(!executedInstruction.skip){memAccInput.push(executedInstruction);}
-            }else{
-                cout << "Execute was not ran this cycle." << endl;
             }
             if(memAccHasBeenRun && safe){
                 memAccInput.pop();
                 WBInput.push(accessInstructionMemory);
-                cout << "Register accessed: " << accessInstructionMemory.storeReg << endl;
-            }else{
-                cout << "memAccess was not ran this cycle." << endl;
-            }
-            if(WBHasBeenRun){
-                cout << "value written back: " << WBin.value << " in register: " << WBin.storeReg << endl;
-            }else{
-                cout << "WriteBack was not ran this cycle." << endl;
             }
 
             PC = thisPC;
