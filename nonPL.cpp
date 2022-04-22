@@ -32,6 +32,7 @@ public:
         vector<int> vars;
         string label;
         bool branch;
+        int instructionLength;
     } typedef opline;
 
     struct executeReturn{

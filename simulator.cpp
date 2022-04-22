@@ -4,12 +4,12 @@
 #include <fstream>
 #include <string>
 #include <unordered_map>
-#include "superscalar.cpp"
+#include "OoO.cpp"
 #include <queue>
 using namespace std;
 
 int main(){
-    string setting = "superscalar";
+    string setting = "ooo";
     if(setting == "nonPL"){
         NonPipeline simulator;
         simulator.run();
@@ -24,6 +24,11 @@ int main(){
         Superscalar simulator;
         simulator.run();
         cout << " Superscalar complete" << endl;
+    }
+    else if(setting == "ooo"){
+        OutOfOrder simulator;
+        simulator.run();
+        cout << " Out of order complete" << endl;
     }
     else{
         class GF{

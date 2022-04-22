@@ -4,15 +4,108 @@
 #include <fstream>
 #include <string>
 #include <unordered_map>
-#include "pipelined.cpp"
+#include "superscalar.cpp"
 #include <queue>
-
-
 
 using namespace std;
 
-class Superscalar: public Pipeline{
+class OutOfOrder: public Superscalar{
 public:
+    class ExecutionUnit{
+    public: 
+        bool busy;
+        int cyclesLeft;
+        
+        void decrementCL(){
+            cyclesLeft = cyclesLeft - 1;
+        }
+
+        void newInst(){
+            cyclesLeft = 1;
+        }
+
+        executeReturn initialiseVal(opline line){
+            executeReturn val;
+            val.branch = line.branch;
+            val.finished = false;
+            val.skip = false;
+            return val;
+        }
+
+        executeReturn exec(opline line, Register *registers, float *memory, unordered_map<string, int> LABELS, int *PC, int *FINISHED, int *instructionsExecuted){
+            executeReturn val = initialiseVal(line);
+            if(!line.branch && line.operation != HALT){
+                val.storeReg = line.vars[0];
+                registers[line.vars[0]].safe = false;
+            }
+            switch(line.operation){
+                case ADD:
+                    val.value =  registers[line.vars[1]].value + registers[line.vars[2]].value;
+                    break;
+                case ADDI:
+                    val.value =  registers[line.vars[1]].value + line.vars[2];
+                    break;
+                case SUB:
+                    val.value =  registers[line.vars[1]].value - registers[line.vars[2]].value;
+                    break;
+                case SUBI:
+                    val.value =  registers[line.vars[1]].value - line.vars[2];
+                    break;
+                case MUL: 
+                    val.value =  registers[line.vars[1]].value * registers[line.vars[2]].value;
+                    break;
+                case DIV:
+                    val.value =  registers[line.vars[1]].value / registers[line.vars[2]].value;
+                    break;
+                case MOD:///
+                    val.value = int(registers[line.vars[1]].value) % int(registers[line.vars[2]].value);
+                    break;///this needs to go
+                case LD:
+                    val.value = memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)];
+                case LDI:
+                    val.value = line.vars[1];
+                    break;
+                case MV:
+                    val.value = registers[line.vars[1]].value;
+                    break;
+                case STR:
+                // add somthing to make sure the values are ints before 
+                    memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)] = registers[line.vars[0]].value;
+                    val.skip = true;
+                    break;
+                case BRNE:
+                    cout << line.vars[0] << line.vars[1] << endl;
+                    if(registers[line.vars[0]].value != registers[line.vars[1]].value) {
+                        *PC = LABELS[line.label];
+                    }val.skip = true;
+                    break;
+                case BRE:
+                    if(registers[line.vars[0]].value == registers[line.vars[1]].value) *PC = LABELS[line.label];
+                    val.skip = true;
+                    break;
+                case BRLT:
+                    if(!(registers[line.vars[0]].value < registers[line.vars[1]].value)) *PC = LABELS[line.label];
+                    val.skip = true;
+                    break;
+                case BR: 
+                    val.skip = true;
+                    *PC = LABELS[line.label];
+                    break;
+                case CMP: 
+                    if(registers[line.vars[1]].value < registers[line.vars[2]].value) val.value = -1;
+                    else if (registers[line.vars[1]].value == registers[line.vars[2]].value) val.value = 0;
+                    else if (registers[line.vars[1]].value > registers[line.vars[2]].value) val.value = 1;
+                    break;
+                case HALT:
+                    val.finished = true;
+                default:
+                    ;
+            }
+            *instructionsExecuted = *instructionsExecuted + 1;
+            return val;
+        }
+    };
+
     void run(){
 
         // set up 
@@ -27,6 +120,7 @@ public:
         int programLength;
         int bubbles;
         int pipelineWidth = 1;
+        ExecutionUnit execUnit; 
 
         int PC = 1;
         bool branch = false;
@@ -44,7 +138,7 @@ public:
         
         //unpipelined loop
         while(FINISHED != 1){
-        // for(int k=0; k<10; k++){
+        // for(int k=0; k<20; k++){
 
             int thisPC = PC;
             cout << endl << "PC: " << PC << endl;
@@ -97,12 +191,41 @@ public:
             
             
             //execute
+            // for(int i=0; i<pipelineWidth; i++){
+            //     if(executeInput.size() > 0 && runExec){
+            //         instructionExecutable[i] = executeInput.front();
+            //         bool safe = checkInputSafety(instructionExecutable[i], registers);
+            //         cout << "instructinexecv0: " << registers[instructionExecutable[i].vars[0]].safe << "instructinexecv1: " << registers[instructionExecutable[i].vars[1]].safe << endl;
+            //         if(safe){
+            //             if(!execUnit.busy){
+            //                 execUnit.busy = true;
+            //                 execUnit.newInst();
+            //                 executeInput.pop();
+            //             }else{cout << i << "Execution unit busy" << endl;}
+            //             execUnit.decrementCL();
+            //             if(execUnit.cyclesLeft == 0){
+            //                 execUnit.busy = false;
+            //                 executedInstruction[i] = execUnit.exec(instructionExecutable[i], registers, memory, LABELS, &thisPC, &FINISHED, &instructionsExecuted); 
+            //                 executeHasBeenRun[i] = true;
+            //                 cout << i << "Executed instruction: " << instructionExecutable[i].operation << endl;
+            //             }
+            //             // executedInstruction[i] = execute(instructionExecutable[i], registers, memory, LABELS, &thisPC, &FINISHED, &instructionsExecuted)
+            //             if(executedInstruction[i].branch){
+            //                 branch = false;
+            //             }
+            //         }else{
+            //             cout << i << "NOT SAFE: Data Dependency.Execute was not ran this cycle." << endl;
+            //             runExec = false;
+            //         }
+            //     }else{cout << i << "Execute was not ran this cycle." << endl;}
+            // }
+
             for(int i=0; i<pipelineWidth; i++){
                 if(executeInput.size() > 0){
                     instructionExecutable[i] = executeInput.front();
                     bool safe = checkInputSafety(instructionExecutable[i], registers);
                     if(safe){
-                        executedInstruction[i] = execute(instructionExecutable[i], registers, memory, LABELS, &thisPC, &FINISHED, &instructionsExecuted);
+                        executedInstruction[i] = execUnit.exec(instructionExecutable[i], registers, memory, LABELS, &thisPC, &FINISHED, &instructionsExecuted);
                         executeInput.pop();
                         executeHasBeenRun[i] = true;
                         if(executedInstruction[i].branch){
@@ -159,6 +282,7 @@ public:
                 if(decodeHasBeenRun[i]){
                     executeInput.push(instruction[i]);
                 }
+                // cout << !executedInstruction[i].skip << endl;
                 if(executeHasBeenRun[i] && !executedInstruction[i].skip){
                     memAccInput.push(executedInstruction[i]);
                 }
@@ -178,10 +302,10 @@ public:
 
             cout << endl << "Clock cycles: " << CLOCK << endl;
             cout << "PC: " << PC << endl << endl;
+            cout << "FINISHED: " << FINISHED << endl << endl;
             
         }
 
-        cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << ((round(float(instructionsExecuted)/float(CLOCK)*100))/100) << endl << " Superscalar" << endl <<endl;
-    } 
-
+        cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << ((round(float(instructionsExecuted)/float(CLOCK)*100))/100) << endl << " OoO complete" << endl <<endl;
+    }
 };

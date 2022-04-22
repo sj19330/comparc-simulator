@@ -3,19 +3,12 @@ Ldi r1, 12
 Ldi r2, 1
 Ldi r3, 1
 Ldi r20, 0
-Label: B1 
-Cmp r4, r2, r0
-Cmp r5, r2, r1
-Bre B2 r4, r3
-Bre B2 r5, r3
-Mod r6, r0, r2
-Mod r7, r1, r2
-Brne B3 r6, r20
-Brne B3 r7, r20
-Mv r8, r2
-Label: B3
-Addi r2, r2, 1
-Br B1
-Label: B2
-Mv r31, r8
+Ldi r4, 4
+Ldi r5, 5
+Brne B1 r4, r5
+Ldi r6, 6
+Ldi r7, 7
+Ldi r8, 8
+Label: B1
+Ldi r18, 67
 Halt
