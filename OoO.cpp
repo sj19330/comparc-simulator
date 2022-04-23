@@ -14,9 +14,7 @@ using namespace std;
 class OutOfOrder: public Superscalar{
 public:
 
-    class ExecutionUnit{
-    private:
-        
+    class ExecutionUnit{        
     public:
         opline input;
         bool instructionInEu = false;
@@ -41,7 +39,6 @@ public:
             val.branch = line.branch;
             val.finished = false;
             val.skip = false;
-            val.timestamp = line.timestamp;
             if(!line.branch && line.operation != HALT){
                 val.storeReg = line.vars[0];
                 registers[line.vars[0]].safe = false;
@@ -109,15 +106,8 @@ public:
                     ;
             }
             return val;
-        }    };
-
-    bool memoryAccess(executeReturn executedInstruction, int position){
-        if(executedInstruction.timestamp == position + 1){
-            return true;
-        }else{
-            return false;
-        } 
-    }
+        }    
+    };
 
     void run(){
 
@@ -135,10 +125,8 @@ public:
         ExecutionUnit EU[plWidth];
         
         
-        int WBPosition = -1;
         int PC = 1;
         bool branch = false;
-        int timestamp = 0;
 
             
         
@@ -149,7 +137,6 @@ public:
  
         queue<fetchReturn> decodeInput;
         queue<opline> RS[plWidth];
-        queue<executeReturn> memAccInput;
         queue<executeReturn> WBInput;
         
         //unpipelined loop
@@ -162,24 +149,16 @@ public:
             bool decodeHasBeenRun[plWidth];
             bool fetchHasBeenRun[plWidth];
             bool executeHasBeenRun[plWidth];
-            bool memAccAddedToQueue[plWidth];
             for(int i=0; i<plWidth; i++){
                 decodeHasBeenRun[i] = false;
                 fetchHasBeenRun[i] = false;
                 executeHasBeenRun[i] = false;
-                memAccAddedToQueue[i] = false;
             }
             // bool WBHasBeenRun = false;
             //maybe these can be one
             fetchReturn fRet[plWidth];
-
             opline dRet[plWidth];
-
             executeReturn exRet[plWidth];
-
-            queue<executeReturn> maRet[plWidth];
-            bool safe[plWidth];
-            executeReturn WBin;
 
             for(int i=0; i<plWidth; i++){
                 if(!branch){
@@ -201,10 +180,6 @@ public:
                     fetchReturn input = decodeInput.front();
                     decodeInput.pop();
                     dRet[i] = decode(input);
-                    if(!dRet[i].branch && dRet[i].operation != STR){
-                        dRet[i].timestamp = timestamp;
-                        timestamp++;
-                    }
                     decodeHasBeenRun[i] = true;
                     cout << i << "Decoded instruction: " << input.instruction << endl;
                 }else{cout << i << "Decode was not ran this cycle." << endl;}
@@ -255,41 +230,21 @@ public:
                     EU[i].decrementCL();
                 }
             }
-            
-            //memacc
-            for(int i=0; i<plWidth; i++){
-                if(memAccInput.size() > 0){
-                    executeReturn input = memAccInput.front();
-                    memAccInput.pop();
-                    if(input.finished){cout << i << "Program Halting after next cycle" << endl;
-                        maRet[i].push(input);
-                    }else{
-                        cout << i << "memAccess has added instruction('s) to WriteBack queue" << endl;
-                        maRet[i].push(input);
-                    }
-                    memAccAddedToQueue[i] = true;
-                }else{cout << i << " memAccess was not ran this cycle." << endl;}
-            }
 
             //WB
             for(int i=0; i<plWidth; i++){
                 if(WBInput.size() > 0){
-                    for(int j=0; j < WBInput.size(); j++){
-                        WBin = WBInput.front();
-                        WBInput.pop();
-                        if(!WBin.finished){
-                        writeBack(WBin, RF);
-                        cout << i << "value written back: " << WBin.value << " in register: " << WBin.storeReg << endl;
-                        }else{
-                            cout << i << "Halting" << endl;
-                            FINISHED = 1;
-                        }
+                    executeReturn input = WBInput.front();
+                    WBInput.pop();
+                    if(!input.finished){
+                    writeBack(input, RF);
+                    cout << i << "value written back: " << input.value << " in register: " << input.storeReg << endl;
+                    }else{
+                        cout << i << "Halting" << endl;
+                        FINISHED = 1;
                     }
-                    
                 }else{cout << i << "WriteBack was not ran this cycle." << endl;}
             }
-
-
 
             //update queues
             for(int i=0; i<plWidth; i++){
@@ -300,13 +255,7 @@ public:
                     RS[i].push(dRet[i]);
                 }
                 if(executeHasBeenRun[i] && !exRet[i].skip){
-                    memAccInput.push(exRet[i]);
-                }
-                if(memAccAddedToQueue[i]){
-                    for(int j=0; j<maRet[i].size(); j++){
-                        WBInput.push(maRet[i].front());
-                        maRet[i].pop();
-                    }
+                    WBInput.push(exRet[i]);
                 }
             }
 
@@ -318,12 +267,9 @@ public:
             for(int i = 0; i<32; i++){
                 cout << RF[i].value << " ";
             }
-
             cout << endl << "Clock cycles: " << CLOCK << endl;
-            cout << "PC: " << PC << endl << endl;
-            
+            cout << "PC: " << PC << endl << endl;   
         }
-
         cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << ((round(float(instructionsExecuted)/float(CLOCK)*100))/100) << endl << " Out of order" << endl <<endl;
     } 
 

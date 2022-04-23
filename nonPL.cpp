@@ -42,7 +42,6 @@ public:
         bool skip;
         bool branch;
         bool finished;
-        int timestamp;
     };
 
     //////////////////////////////      Stages
