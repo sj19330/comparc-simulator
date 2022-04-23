@@ -26,7 +26,7 @@ public:
         string program = "machineCode.txt";
         int programLength;
         int bubbles;
-        int pipelineWidth = 1;
+        int pipelineWidth = 4;
 
         int PC = 1;
         bool branch = false;

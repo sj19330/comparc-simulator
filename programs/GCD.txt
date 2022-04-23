@@ -39,3 +39,19 @@ Br B1
 Label: B2
 Mv r31, r8
 Halt
+
+Ldi r0, 18
+Ldi r1, 12
+Ldi r2, 1
+Ldi r3, 1
+Ldi r20, 0
+Mul r17, r1, r2
+Ldi r4, 4
+Ldi r5, 5
+Brne B1 r4, r5
+Ldi r6, 6
+Ldi r7, 7
+Ldi r8, 8
+Label: B1
+Ldi r18, 67
+Halt

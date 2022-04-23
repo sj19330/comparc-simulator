@@ -33,6 +33,7 @@ public:
         string label;
         bool branch;
         int instructionLength;
+        int timestamp;
     } typedef opline;
 
     struct executeReturn{
@@ -41,6 +42,7 @@ public:
         bool skip;
         bool branch;
         bool finished;
+        int timestamp;
     };
 
     //////////////////////////////      Stages

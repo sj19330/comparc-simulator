@@ -28,17 +28,17 @@ public:
     bool checkInputSafety(opline line, Register *registers){
         bool check1 = true;
         bool check2 = true;
-        if(line.operation != BR && line.operation != LDI && line.operation != HALT){
-            check1 = registers[line.vars[1]].safe;
-            if(line.operation != ADDI && line.operation != SUBI && line.operation != MV){
-                if(line.operation != BRNE && line.operation != BRE && line.operation != BRLT){
-                    check2 = registers[line.vars[2]].safe;
-                }else{
-                    check2 = registers[line.vars[0]].safe;
+        bool check3 = true;
+        if(line.operation != BR && line.operation != HALT){
+            check1 = registers[line.vars[0]].safe;
+            if(line.operation != LDI){
+                check2 = registers[line.vars[1]].safe;
+                if(line.operation != ADDI && line.operation != SUBI && line.operation != MV && line.operation != BRLT && line.operation != BRNE && line.operation != BRE){
+                    check3 = registers[line.vars[2]].safe;
                 }
             }
         }
-        if(check1 && check2){
+        if(check1 && check2 && check3){
             return true;
         }else{
             return false;
