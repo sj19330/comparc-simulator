@@ -25,7 +25,6 @@ public:
         int instructionsExecuted = 0;
         string program = "machineCode.txt";
         int programLength;
-        int bubbles;
         int pipelineWidth = 4;
 
         int PC = 1;
@@ -39,7 +38,6 @@ public:
  
         queue<fetchReturn> decodeInput;
         queue<opline> executeInput;
-        queue<executeReturn> memAccInput;
         queue<executeReturn> WBInput;
         
         //unpipelined loop
@@ -52,32 +50,25 @@ public:
             bool decodeHasBeenRun[pipelineWidth];
             bool fetchHasBeenRun[pipelineWidth];
             bool executeHasBeenRun[pipelineWidth];
-            bool memAccHasBeenRun[pipelineWidth];
             for(int i=0; i<pipelineWidth; i++){
                 decodeHasBeenRun[i] = false;
                 fetchHasBeenRun[i] = false;
                 executeHasBeenRun[i] = false;
-                memAccHasBeenRun[i] = false;
             }
             // bool WBHasBeenRun = false;
             //maybe these can be one
-            fetchReturn fetched[pipelineWidth];
-            fetchReturn fetchedInstruction[pipelineWidth];
-            opline instruction[pipelineWidth];
-            opline instructionExecutable[pipelineWidth];
-            executeReturn executedInstruction[pipelineWidth];
-            executeReturn accessInstructionMemory[pipelineWidth];
-            bool safe[pipelineWidth];
-            executeReturn WBin;
+            fetchReturn fRet[pipelineWidth];
+            opline dRet[pipelineWidth];
+            executeReturn eRet[pipelineWidth];
 
             for(int i=0; i<pipelineWidth; i++){
                 if(!branch){
                     //fetch
                     if(thisPC <= programLength){
-                        fetched[i] = fetch(instructionMemory, &thisPC);
+                        fRet[i] = fetch(instructionMemory, &thisPC);
                         fetchHasBeenRun[i] = true;
-                        branch = fetched[i].branch;
-                        cout << i << "Fetched instruction: " << fetched[i].instruction << endl;
+                        branch = fRet[i].branch;
+                        cout << i << "Fetched instruction: " << fRet[i].instruction << endl;
                     }
                     else{cout << i << "Fetch was not ran this cycle." << endl;}
                 }else{cout << i << "Fetch was not ran this cycle." << endl;}
@@ -87,11 +78,11 @@ public:
             //decode
             for(int i=0; i<pipelineWidth; i++){
                 if(decodeInput.size() > 0){
-                    fetchedInstruction[i] = decodeInput.front();
+                    fetchReturn input = decodeInput.front();
                     decodeInput.pop();
-                    instruction[i] = decode(fetchedInstruction[i]);
+                    dRet[i] = decode(input);
                     decodeHasBeenRun[i] = true;
-                    cout << i << "Decoded instruction: " << fetchedInstruction[i].instruction << endl;
+                    cout << i << "Decoded instruction: " << input.instruction << endl;
                 }else{cout << i << "Decode was not ran this cycle." << endl;}
             }
             
@@ -99,49 +90,30 @@ public:
             //execute
             for(int i=0; i<pipelineWidth; i++){
                 if(executeInput.size() > 0){
-                    instructionExecutable[i] = executeInput.front();
-                    bool safe = checkInputSafety(instructionExecutable[i], registers);
+                    opline input = executeInput.front();
+                    bool safe = checkInputSafety(input, registers);
                     if(safe){
-                        executedInstruction[i] = execute(instructionExecutable[i], registers, memory, LABELS, &thisPC, &FINISHED, &instructionsExecuted);
+                        eRet[i] = execute(input, registers, memory, LABELS, &thisPC, &FINISHED, &instructionsExecuted);
                         executeInput.pop();
                         executeHasBeenRun[i] = true;
-                        if(executedInstruction[i].branch){
+                        if(eRet[i].branch){
                             branch = false;
                         }
-                        cout << i << "Executed instruction: " << instructionExecutable[i].operation << endl;
+                        cout << i << "Executed instruction: " << input.operation << endl;
                     }else{
                         cout << i << "NOT SAFE: Data Dependency.Execute was not ran this cycle." << endl;
                     }
                 }else{cout << i << "Execute was not ran this cycle." << endl;}
             }
-            
-            //memacc
-            for(int i=0; i<pipelineWidth; i++){
-                if(memAccInput.size() > 0){
-                    accessInstructionMemory[i] = memAccInput.front();
-                    safe[i] = true;
-                    memAccHasBeenRun[i] = true;
-                    if(accessInstructionMemory[i].finished){cout << i << "Program Halting after next cycle" << endl;
-                        memAccInput.pop();
-                    }else{
-                        if(safe[i]){
-                            memAccInput.pop();
-                            cout << i << "Register: " << accessInstructionMemory[i].storeReg << " safe" << endl;
-                        }else{
-                            cout << i << "Register: " << accessInstructionMemory[i].storeReg << "not safe" << endl;                       
-                        }
-                    }
-                }else{cout << i << "memAccess was not ran this cycle." << endl;}
-            }
 
             //WB
             for(int i=0; i<pipelineWidth; i++){
                 if(WBInput.size() > 0){
-                    WBin = WBInput.front();
+                    executeReturn input = WBInput.front();
                     WBInput.pop();
-                    if(!WBin.finished){
-                    writeBack(WBin, registers);
-                    cout << i << "value written back: " << WBin.value << " in register: " << WBin.storeReg << endl;
+                    if(!input.finished){
+                    writeBack(input, registers);
+                    cout << i << "value written back: " << input.value << " in register: " << input.storeReg << endl;
                     }else{
                         cout << i << "Halting" << endl;
                         FINISHED = 1;
@@ -154,16 +126,13 @@ public:
             //update queues
             for(int i=0; i<pipelineWidth; i++){
                 if(fetchHasBeenRun[i]){
-                    decodeInput.push(fetched[i]);
+                    decodeInput.push(fRet[i]);
                 }
                 if(decodeHasBeenRun[i]){
-                    executeInput.push(instruction[i]);
+                    executeInput.push(dRet[i]);
                 }
-                if(executeHasBeenRun[i] && !executedInstruction[i].skip){
-                    memAccInput.push(executedInstruction[i]);
-                }
-                if(memAccHasBeenRun[i] && safe[i]){
-                    WBInput.push(accessInstructionMemory[i]);
+                if(executeHasBeenRun[i] && !eRet[i].skip){
+                    WBInput.push(eRet[i]);
                 }
             }
 
