@@ -168,11 +168,6 @@ public:
     }
 
 
-    bool memoryAccess(executeReturn executedInstruction, Register registers[]){
-        return true; // still in order so doesnt matter yet
-    }
-
-
     void writeBack(executeReturn executedInstruction, Register *registers){
         registers[executedInstruction.storeReg].value = executedInstruction.value;
     }
@@ -205,11 +200,8 @@ public:
             opline instruction = decode(fetchedInstruction);//decode
             executeReturn executedInstruction = execute(instruction, registers, memory, LABELS, &PC, &FINISHED, &instructionsExecuted);  //execute 
             if(!executedInstruction.skip){
-                bool ready = memoryAccess(executedInstruction, registers);//mem access
-                if(ready){
-                    writeBack(executedInstruction, registers);//writeback
-                }
-                CLOCK = CLOCK + 5;
+                writeBack(executedInstruction, registers);//writeback
+                CLOCK = CLOCK + 4;
             }else{
                 CLOCK = CLOCK + 3;
             }
