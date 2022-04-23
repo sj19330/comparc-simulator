@@ -119,7 +119,7 @@ public:
             for(int i=0; i<pipelineWidth; i++){
                 if(memAccInput.size() > 0){
                     accessInstructionMemory[i] = memAccInput.front();
-                    safe[i] = memoryAccess(accessInstructionMemory[i], registers);
+                    safe[i] = true;
                     memAccHasBeenRun[i] = true;
                     if(accessInstructionMemory[i].finished){cout << i << "Program Halting after next cycle" << endl;
                         memAccInput.pop();
