@@ -42,6 +42,8 @@ public:
         bool skip;
         bool branch;
         bool finished;
+        int extraCycles;
+        bool toMemory;
     };
 
     //////////////////////////////      Stages
@@ -96,8 +98,15 @@ public:
     ///// takes the opcode and vars and executes accordingly
     executeReturn execute(opline line, Register *registers, float *memory, unordered_map<string, int> LABELS, int *PC, int *FINISHED, int *instructionsExecuted){
         executeReturn val;
-        if(!line.branch && line.operation != HALT){
+        val.value = 0;
+        val.skip = false;
+        val.finished = false;
+        val.branch = line.branch;
+        val.extraCycles = 0;
+        val.toMemory = false;
+        if(!line.branch && line.operation != HALT && line.operation != STR){
             val.storeReg = line.vars[0];
+            registers[line.vars[0]].safe = false;
         }
         switch(line.operation){
             case ADD:
@@ -114,15 +123,18 @@ public:
                 break;
             case MUL: 
                 val.value =  registers[line.vars[1]].value * registers[line.vars[2]].value;
+                val.extraCycles = 2;
                 break;
             case DIV:
                 val.value =  registers[line.vars[1]].value / registers[line.vars[2]].value;
+                val.extraCycles = 2;
                 break;
             case MOD:///
                 val.value = int(registers[line.vars[1]].value) % int(registers[line.vars[2]].value);
                 break;///this needs to go
             case LD:
                 val.value = memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)];
+                break;
             case LDI:
                 val.value = line.vars[1];
                 break;
@@ -131,8 +143,11 @@ public:
                 break;
             case STR:
             // add somthing to make sure the values are ints before 
-                memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)] = registers[line.vars[0]].value;
-                val.skip = true;
+                // memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)] = registers[line.vars[0]].value;
+                val.storeReg = int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value);
+                val.value = registers[line.vars[0]].value;
+                val.toMemory = true;
+                // val.skip = true;
                 break;
             case BRNE:
                 if(registers[line.vars[0]].value != registers[line.vars[1]].value) *PC = LABELS[line.label]-1;
@@ -162,14 +177,20 @@ public:
             default:
                 ;
         }
+        cout << val.value << endl;
+        cout << val.storeReg << endl;
         *PC = *PC +1;
         *instructionsExecuted = *instructionsExecuted + 1;
         return val;
     }
 
 
-    void writeBack(executeReturn executedInstruction, Register *registers){
-        registers[executedInstruction.storeReg].value = executedInstruction.value;
+    void writeBack(executeReturn executedInstruction, Register *registers, float *memory){
+        if(executedInstruction.toMemory){
+            memory[executedInstruction.storeReg] = executedInstruction.value;
+        }else{
+            registers[executedInstruction.storeReg].value = executedInstruction.value;
+        }
     }
 
 
@@ -199,8 +220,9 @@ public:
             fetchReturn fetchedInstruction = fetch(instructionMemory, &PC);//fetch
             opline instruction = decode(fetchedInstruction);//decode
             executeReturn executedInstruction = execute(instruction, registers, memory, LABELS, &PC, &FINISHED, &instructionsExecuted);  //execute 
+            CLOCK = CLOCK + executedInstruction.extraCycles;
             if(!executedInstruction.skip){
-                writeBack(executedInstruction, registers);//writeback
+                writeBack(executedInstruction, registers, memory);//writeback
                 CLOCK = CLOCK + 4;
             }else{
                 CLOCK = CLOCK + 3;
@@ -213,5 +235,6 @@ public:
             cout << endl << "PC: " << PC << endl << endl;
         }
         cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << ((round(float(instructionsExecuted)/float(CLOCK)*100))/100) << endl <<endl;
+    cout << memory[0] << endl;
     } 
 };

@@ -112,7 +112,7 @@ public:
                     executeReturn input = WBInput.front();
                     WBInput.pop();
                     if(!input.finished){
-                    writeBack(input, registers);
+                    writeBack(input, registers, memory);
                     cout << i << "value written back: " << input.value << " in register: " << input.storeReg << endl;
                     }else{
                         cout << i << "Halting" << endl;
@@ -124,6 +124,7 @@ public:
 
 
             //update queues
+            int extraCycles = 0;
             for(int i=0; i<pipelineWidth; i++){
                 if(fetchHasBeenRun[i]){
                     decodeInput.push(fRet[i]);
@@ -134,12 +135,16 @@ public:
                 if(executeHasBeenRun[i] && !eRet[i].skip){
                     WBInput.push(eRet[i]);
                 }
+                if(executeHasBeenRun[i] && (eRet[i].extraCycles > extraCycles)){
+                    extraCycles = eRet[i].extraCycles;                    
+                }
+
             }
 
             PC = thisPC;
 
             //print out
-            CLOCK = CLOCK + 1;
+            CLOCK = CLOCK + 1 + extraCycles;
             cout << "Registers: ";
             for(int i = 0; i<32; i++){
                 cout << registers[i].value << " ";
@@ -151,6 +156,7 @@ public:
         }
 
         cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << ((round(float(instructionsExecuted)/float(CLOCK)*100))/100) << endl << " Superscalar" << endl <<endl;
+        cout << memory[0] << endl; 
     } 
 
 };

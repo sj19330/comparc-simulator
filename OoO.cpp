@@ -39,6 +39,8 @@ public:
             val.branch = line.branch;
             val.finished = false;
             val.skip = false;
+            val.extraCycles = 0;
+            val.toMemory = false;
             if(!line.branch && line.operation != HALT){
                 val.storeReg = line.vars[0];
                 registers[line.vars[0]].safe = false;
@@ -75,8 +77,9 @@ public:
                     break;
                 case STR:
                 // add somthing to make sure the values are ints before 
-                    memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)] = registers[line.vars[0]].value;
-                    val.skip = true;
+                    val.storeReg = int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value);
+                    val.value = registers[line.vars[0]].value;
+                    val.toMemory = true;
                     break;
                 case BRNE:
                     if(registers[line.vars[0]].value != registers[line.vars[1]].value) {
@@ -117,6 +120,7 @@ public:
         fill_n(memory, 516, 0);
         string IM[64];
         int FINISHED = 0;
+        bool HaltExecuted = false;
         int CLOCK = 0;
         int instructionsExecuted = 0;
         string program = "machineCode.txt";
@@ -237,11 +241,11 @@ public:
                     executeReturn input = WBInput.front();
                     WBInput.pop();
                     if(!input.finished){
-                    writeBack(input, RF);
+                    writeBack(input, RF, memory);
                     cout << i << "value written back: " << input.value << " in register: " << input.storeReg << endl;
                     }else{
                         cout << i << "Halting" << endl;
-                        FINISHED = 1;
+                        HaltExecuted = true;
                     }
                 }else{cout << i << "WriteBack was not ran this cycle." << endl;}
             }
@@ -259,6 +263,22 @@ public:
                 }
             }
 
+            if(HaltExecuted){
+                bool eusBusy = false;
+                bool RSsEmpty = true;
+                for(int i = 0; i<plWidth; i++){
+                    if(EU[i].instructionInEu){
+                        eusBusy = true;
+                    }
+                    if(RS[i].size() !=0){
+                        RSsEmpty = false;
+                    }
+                }
+                if(!eusBusy && WBInput.size() == 0 && RSsEmpty){
+                    FINISHED = 1;
+                }
+            }
+
             PC = thisPC;
 
             //print out
@@ -271,6 +291,7 @@ public:
             cout << "PC: " << PC << endl << endl;   
         }
         cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << ((round(float(instructionsExecuted)/float(CLOCK)*100))/100) << endl << " Out of order" << endl <<endl;
+    cout << memory[0] << endl;
     } 
 
 };

@@ -52,6 +52,7 @@ public:
         val.skip = false;
         val.finished = false;
         val.branch = line.branch;
+        val.extraCycles = 0;
         if(!line.branch && line.operation != HALT && line.operation != STR){
             val.storeReg = line.vars[0];
             registers[line.vars[0]].safe = false;
@@ -71,25 +72,28 @@ public:
                 break;
             case MUL: 
                 val.value =  registers[line.vars[1]].value * registers[line.vars[2]].value;
+                val.extraCycles = 2;
                 break;
             case DIV:
                 val.value =  registers[line.vars[1]].value / registers[line.vars[2]].value;
+                val.extraCycles = 2;
                 break;
             case MOD:
                 val.value = int(registers[line.vars[1]].value) % int(registers[line.vars[2]].value);
                 break;
             case LD:
                 val.value = memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)];
+                break;
             case LDI:
                 val.value = line.vars[1];
                 break;
             case MV:
                 val.value = registers[line.vars[1]].value;
                 break;
-            case STR:
-            // add somthing to make sure the values are ints before 
-                memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)] = registers[line.vars[0]].value;
-                val.skip = true;
+            case STR: 
+                val.storeReg = int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value);
+                val.value = registers[line.vars[0]].value;
+                val.toMemory = true;
                 break;
             case BRNE:
                 if(registers[line.vars[0]].value != registers[line.vars[1]].value) *PC = LABELS[line.label];
@@ -122,9 +126,13 @@ public:
     }
 
 
-    void writeBack(executeReturn executedInstruction, Register *registers){
-        registers[executedInstruction.storeReg].value = executedInstruction.value;
-        registers[executedInstruction.storeReg].safe = true;
+    void writeBack(executeReturn executedInstruction, Register *registers, float *memory){
+        if(executedInstruction.toMemory){
+            memory[executedInstruction.storeReg] = executedInstruction.value;
+        }else{
+            registers[executedInstruction.storeReg].value = executedInstruction.value;
+            registers[executedInstruction.storeReg].safe = true;
+        }
     }
 
 
@@ -195,6 +203,7 @@ public:
                 bool safe = checkInputSafety(input, registers);
                 if(safe){
                     eRet = execute(input, registers, memory, LABELS, &thisPC, &FINISHED, &instructionsExecuted);
+                    CLOCK = CLOCK + eRet.extraCycles;
                     executeInput.pop();
                     executeHasBeenRun = true;
                     if(eRet.branch){
@@ -210,7 +219,7 @@ public:
                 executeReturn input = WBInput.front();
                 WBInput.pop();
                 if(!input.finished){
-                    writeBack(input, registers);
+                    writeBack(input, registers, memory);
                     cout << "value written back: " << input.value << " in register: " << input.storeReg << endl;
                 }else{
                     cout << "Halting" << endl;
@@ -244,5 +253,6 @@ public:
         }
 
         cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << ((round(float(instructionsExecuted)/float(CLOCK)*100))/100) << endl << " Pipelined" << endl <<endl;
+        cout << memory[0] << endl;
     } 
 };
