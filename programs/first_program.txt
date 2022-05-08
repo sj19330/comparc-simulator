@@ -1,8 +1,0 @@
-Ldi r2, 5
-Add r1, r2, r0
-Mul r3, r0, r1
-Sub r4, r3, r2
-Addi r4, r4, 10
-Divi r5, r4, 5
-Muli r6, r1, 10
-

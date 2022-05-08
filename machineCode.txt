@@ -18,4 +18,5 @@ Addi r2, r2, 1
 Br B1
 Label: B2
 Mv r31, r8
+Str r31, r20, r20
 Halt
