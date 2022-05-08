@@ -53,6 +53,7 @@ public:
         val.finished = false;
         val.branch = line.branch;
         val.extraCycles = 0;
+        val.toMemory = false;
         if(!line.branch && line.operation != HALT && line.operation != STR){
             val.storeReg = line.vars[0];
             registers[line.vars[0]].safe = false;
@@ -80,6 +81,7 @@ public:
                 break;
             case MOD:
                 val.value = int(registers[line.vars[1]].value) % int(registers[line.vars[2]].value);
+                val.extraCycles = 4;
                 break;
             case LD:
                 val.value = memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)];
@@ -249,9 +251,7 @@ public:
 
             cout << endl << "Clock cycles: " << CLOCK << endl;
             cout << "PC: " << PC << endl << endl;
-            
         }
-
         cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << ((round(float(instructionsExecuted)/float(CLOCK)*100))/100) << endl << " Pipelined" << endl <<endl;
         cout << memory[0] << endl;
     } 

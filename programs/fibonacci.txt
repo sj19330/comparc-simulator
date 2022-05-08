@@ -1,0 +1,21 @@
+Ldi r0, 12
+Mv r31, r0
+Ldi r20, 2
+Ldi r19, 0
+Ldi r18, 1
+Sub r31, r31, r18
+Str r18, r18, r18
+Sub r0, r0, r20
+Ldi r1, 0 
+Ldi r2, 1
+Label: B1
+Add r3, r1, r2
+Mv r1, r2
+Mv r2, r3
+Str r3, r19, r20
+Add r20, r20, r18
+Sub r0, r0, r18
+Brne B1 r0, r19
+Ld r30, r19, r31
+Str r30, r19, r19
+Halt

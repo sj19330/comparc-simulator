@@ -26,7 +26,7 @@ public:
         string program = "machineCode.txt";
         int programLength;
         int pipelineWidth = 4;
-
+        int fullPipeline = 0;
         int PC = 1;
         bool branch = false;
             
@@ -43,7 +43,7 @@ public:
         //unpipelined loop
         while(FINISHED != 1){
         // for(int k=0; k<10; k++){
-
+            bool allExecuteRanThisCycle = true;
             int thisPC = PC;
             cout << endl << "PC: " << PC << endl;
 
@@ -138,7 +138,13 @@ public:
                 if(executeHasBeenRun[i] && (eRet[i].extraCycles > extraCycles)){
                     extraCycles = eRet[i].extraCycles;                    
                 }
+                if(!executeHasBeenRun[i]){
+                    allExecuteRanThisCycle = false;
+                }
+            }
 
+            if(allExecuteRanThisCycle){
+                fullPipeline = fullPipeline + 1;
             }
 
             PC = thisPC;
@@ -156,6 +162,7 @@ public:
         }
 
         cout << " clock cycles: " << CLOCK << endl << " instructions executed: " << instructionsExecuted <<  endl << " Program counter: " << PC << endl << " instructions per cycle: " << ((round(float(instructionsExecuted)/float(CLOCK)*100))/100) << endl << " Superscalar" << endl <<endl;
+        cout << fullPipeline << endl;
         cout << memory[0] << endl; 
     } 
 

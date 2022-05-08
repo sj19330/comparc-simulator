@@ -129,9 +129,10 @@ public:
                 val.value =  registers[line.vars[1]].value / registers[line.vars[2]].value;
                 val.extraCycles = 2;
                 break;
-            case MOD:///
+            case MOD:
                 val.value = int(registers[line.vars[1]].value) % int(registers[line.vars[2]].value);
-                break;///this needs to go
+                val.extraCycles = 4;
+                break;
             case LD:
                 val.value = memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)];
                 break;
@@ -142,12 +143,9 @@ public:
                 val.value = registers[line.vars[1]].value;
                 break;
             case STR:
-            // add somthing to make sure the values are ints before 
-                // memory[int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value)] = registers[line.vars[0]].value;
                 val.storeReg = int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value);
                 val.value = registers[line.vars[0]].value;
                 val.toMemory = true;
-                // val.skip = true;
                 break;
             case BRNE:
                 if(registers[line.vars[0]].value != registers[line.vars[1]].value) *PC = LABELS[line.label]-1;

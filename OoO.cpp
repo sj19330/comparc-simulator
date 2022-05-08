@@ -29,6 +29,8 @@ public:
             instructionInEu = true;
             if(exIn.operation == MUL || exIn.operation == DIV){
                 cyclesLeft = 2;
+            }else if(exIn.operation == MOD){
+                cyclesLeft = 0;
             }else{
                 cyclesLeft = 0;
             }
@@ -76,7 +78,6 @@ public:
                     val.value = registers[line.vars[1]].value;
                     break;
                 case STR:
-                // add somthing to make sure the values are ints before 
                     val.storeReg = int(registers[line.vars[1]].value) + int(registers[line.vars[2]].value);
                     val.value = registers[line.vars[0]].value;
                     val.toMemory = true;
@@ -241,8 +242,12 @@ public:
                     executeReturn input = WBInput.front();
                     WBInput.pop();
                     if(!input.finished){
-                    writeBack(input, RF, memory);
-                    cout << i << "value written back: " << input.value << " in register: " << input.storeReg << endl;
+                        writeBack(input, RF, memory);
+                        if(!input.toMemory){
+                            cout << i << "value written back: " << input.value << " in register: " << input.storeReg << endl;
+                        }else{
+                            cout << i << "value written back: " << input.value << " in memory: " << input.storeReg << endl;
+                        }
                     }else{
                         cout << i << "Halting" << endl;
                         HaltExecuted = true;

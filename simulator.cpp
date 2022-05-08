@@ -9,7 +9,7 @@
 using namespace std;
 
 int main(){
-    string setting = "ooo";
+    string setting = "pipelined";
     if(setting == "nonPL"){
         NonPipeline simulator;
         simulator.run();
@@ -25,7 +25,7 @@ int main(){
         simulator.run();
         cout << " Superscalar complete" << endl;
     }
-    else if(setting == "ooo"){
+    else if(setting == "ooo"){ // i did not manage to get this working correctly
         OutOfOrder simulator;
         simulator.run();
         cout << " Out of order complete" << endl;

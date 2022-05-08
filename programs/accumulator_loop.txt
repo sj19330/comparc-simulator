@@ -1,8 +1,9 @@
 Ldi r0, 1
 Ldi r1, 10
+Label: B1
 Brlt 6 r0, r1
 Addi r0, r0, 1
-Br 3 0
+Br B1
 Ld r31, r0
 
 
