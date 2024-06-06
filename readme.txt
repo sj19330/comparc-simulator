@@ -1,4 +1,17 @@
+# Computer Processor Simulator
 
+> This project simulates the processor of a modern pipelined computer and runs assembly code stored int the machineCode.txt file 
+> The pipeline has 4 stages: 
+> - Fetch
+> - Decode
+> - Execute
+> - Writeback
+
+This project was a final year project for the 'Advanced Computer Architecture' moudule whilst studyng at the university of bristol which achieved a high 2.1
+
+
+
+##### Instructions on how to use: 
 
 to compile run: "make", then to run executable run: "./exec"
 the simulator.cpp file is the main file for the program
@@ -13,7 +26,7 @@ the "convert.cpp" & "convert.h" files contain the enums for each executable oper
 simulator. 
 
 the GCD, factorial & fibonacci programs are contained in the programs folder
-to run one, copy the code into "machineCode.txt" for the code to run 
+to run, copy the code into "machineCode.txt"
 
 the code already in the "machineCode.txt" file is the code for GCD and can be run straight away
 
