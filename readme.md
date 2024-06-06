@@ -1,6 +1,8 @@
 # Computer Processor Simulator
 
-> This project simulates the processor of a modern pipelined computer and runs assembly code stored int the machineCode.txt file 
+> This project simulates the processor of a modern pipelined computer
+> and runs assembly code stored in the machineCode.txt file
+> 
 > The pipeline has 4 stages: 
 > - Fetch
 > - Decode
